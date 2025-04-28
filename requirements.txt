@@ -9,7 +9,7 @@ python-dotenv==1.1.0
 soundfile==0.13.1
 pydub==0.25.1
 librosa==0.11.0
-torch==2.5.1+cu121
+torch==2.7.0
 torchaudio==2.5.1+cu121
 torchvision==0.20.1+cu121
 tqdm==4.67.1
