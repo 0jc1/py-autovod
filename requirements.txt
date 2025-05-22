@@ -1,5 +1,5 @@
 loguru==0.7.3
-moviepy==2.1.2
+moviepy==2.2.1
 numpy==2.1.3
 yt-dlp
 openai==1.79.0
