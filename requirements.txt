@@ -2,7 +2,7 @@ loguru==0.7.3
 moviepy==2.1.2
 numpy==2.1.3
 yt-dlp
-openai==1.79.0
+openai==1.82.0
 openai-whisper @ git+https://github.com/openai/whisper.git@517a43ecd132a2089d85f4ebc044728a71d49f6e
 requests==2.32.3
 python-dotenv==1.1.0
