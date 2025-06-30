@@ -7,7 +7,7 @@ requests==2.32.4
 python-dotenv==1.1.1
 soundfile==0.13.1
 pydub==0.25.1
-torch==2.5.1+cu121
+torch==2.7.1
 torchaudio==2.5.1+cu121
 torchvision==0.20.1+cu121
 librosa==0.11.0
