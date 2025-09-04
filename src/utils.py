@@ -38,13 +38,10 @@ def determine_source(stream_source: str, streamer_name: str) -> Optional[str]:
         "kick": f"kick.com/{streamer_name}",
         "youtube": f"youtube.com/@{streamer_name}/live",
     }
-    return sources.get(stream_source.lower())
-
-
-def check_stream_live(url: str) -> bool:
-    # TODO this takes many seconds, find a faster method
-    result = run_command(["streamlink", url])
-    return result.returncode == 0
+    url = sources.get(stream_source.lower())
+    if url is None:
+        raise ValueError(f"Unsupported stream source: {stream_source}")
+    return url
 
 
 def get_size(path: str) -> float:
@@ -62,7 +59,7 @@ def get_size(path: str) -> float:
 
 def fetch_metadata(streamer_url: str) -> dict:
     try:
-        time.sleep(25)
+        time.sleep(1)
         result = subprocess.run(
             ["streamlink", "--json", streamer_url],
             capture_output=True,

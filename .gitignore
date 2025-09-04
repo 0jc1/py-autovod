@@ -71,11 +71,12 @@ lib64
 *.ts 
 *.wav
 *.mp3
+*.mp4
 /recordings
 
 # Log files
 *.log
 
-
+*.ipynb
 
 

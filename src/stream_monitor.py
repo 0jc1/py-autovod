@@ -4,10 +4,12 @@ import time
 import threading
 import subprocess
 import datetime
+from io import BytesIO
 from typing import Optional
 from logger import logger
-from utils import determine_source, check_stream_live, load_config, fetch_metadata
+from utils import determine_source, load_config, fetch_metadata
 from processor import processor
+from streamlink import NoPluginError, Streamlink, PluginError, StreamError
 
 
 class StreamMonitor(threading.Thread):
@@ -20,9 +22,25 @@ class StreamMonitor(threading.Thread):
         self.running = False
         self.config = None
         self.stream_metadata = {}
+        self.session = None
         self.stream_source_url = None
-        self.current_process = None  # Store the running streamlink subprocess
         self._load_configuration()
+        self._setup_session()
+
+    def _setup_session(self):
+        # set up Streamlink session for this stream
+        self.session = Streamlink()
+        self.session.set_option("stream-timeout", 60)
+
+
+    def check_streamer_live(self, url : str):
+        try:
+            streams = self.session.streams(url)
+            return streams != {}
+        except Exception as e:
+            logger.warning(f"{e}")
+            return False
+
 
     def _load_configuration(self) -> bool:
         self.config = load_config(self.streamer_name)
@@ -61,37 +79,86 @@ class StreamMonitor(threading.Thread):
 
         output_dir = os.path.dirname(output_path)
         os.makedirs(output_dir, exist_ok=True)
+        
+        try: 
+            plugin_name, plugin_class, resolved_url = self.session.resolve_url(self.stream_source_url)
+            plugin_options = {}
+            chunk_size: int = 8192
+            max_retries = 3       # number of attempts
+            retry_delay = 2       # seconds between retries
 
-        command = ["streamlink", "-o", output_path, self.stream_source_url, quality]
+            if plugin_name == "twitch":
+                plugin_options = {"disable-ads": True}
+    
+            plugin = plugin_class(self.session, resolved_url, options=plugin_options)
+            
+            streams = plugin.streams()
 
-        if self.config.has_option("streamlink", "flags"):
-            flags = self.config.get("streamlink", "flags").strip(",").split(",")
-            flags = [flag.strip() for flag in flags if flag.strip()]
-            command.extend(flags)
+            for attempt in range(1, max_retries + 1):
+                try:
+                    fd = streams[quality].open()
+                    # prebuffer
+                    fd.read(chunk_size)
+                    break 
+                except OSError as e:
+                    logger.warning(f"Attempt {attempt} failed to open stream for {self.streamer_name}: {e}")
+                    if attempt == max_retries:
+                        logger.error("Max retries reached. Could not open stream.")
+                        raise
+                    time.sleep(retry_delay)
 
-        try:
-            # Start the download process
-            self.current_process = subprocess.Popen(
-                command, stdout=sys.stdout, stderr=subprocess.DEVNULL
-            )
-            retcode = self.current_process.wait()  # Wait until the stream ends
-            success = retcode == 0
+            # read then and write to file
+            with open(output_path, "wb") as f:
+                while True:
+                    try:
+                        data = fd.read(chunk_size)
+                        if data == b"":  # empty bytes = end of stream
+                            break
+                        f.write(data)
+                    except OSError as err:
+                        logger.error(f"OSError while reading stream: {err}")
+                        break
+                
+            fd.close()
 
-            if success:
-                if output_path and os.path.exists(output_path):
-                    logger.debug(f"Found downloaded file: {output_path}")
-                    return True, output_path
-
-                logger.warning("Could not find the downloaded file")
-                return False, ""
-            else:
-                return False, ""
-
-        except Exception as e:
-            logger.error(f"Error running streamlink: {e}")
+        except (OSError, NoPluginError, PluginError, StreamError) as e:
+            print(e)
+            logger.error(f"bru")
             return False, ""
-        finally:
-            self.current_process = None
+        
+        return True, output_path
+
+        # command = ["streamlink", "-o", output_path, self.stream_source_url, quality]
+
+        # if self.config.has_option("streamlink", "flags"):
+        #     flags = self.config.get("streamlink", "flags").strip(",").split(",")
+        #     flags = [flag.strip() for flag in flags if flag.strip()]
+        #     command.extend(flags)
+
+        # try:
+        #     # Start the download process
+        #     self.current_process = subprocess.Popen(
+        #         command, stdout=sys.stdout, stderr=subprocess.DEVNULL
+        #     )
+        #     retcode = self.current_process.wait()  # Wait until the stream ends
+        #     success = retcode == 0
+
+        #     if success:
+        #         if output_path and os.path.exists(output_path):
+        #             logger.debug(f"Found downloaded file: {output_path}")
+        #             return True, output_path
+
+        #         logger.warning("Could not find the downloaded file")
+        #         return False, ""
+        #     else:
+        #         return False, ""
+
+        # except Exception as e:
+        #     logger.error(f"Error running streamlink: {e}")
+        #     return False, ""
+        # finally:
+        #     self.current_process = None
+
 
     def run(self) -> None:
         if not self.config or not self.stream_source_url:
@@ -105,10 +172,11 @@ class StreamMonitor(threading.Thread):
 
         while self.running:
             try:
-                if check_stream_live(self.stream_source_url):
+                if self.check_streamer_live(self.stream_source_url):
                     logger.success(f"{self.streamer_name} is live!")
 
                     self.stream_metadata: dict = fetch_metadata(self.stream_source_url)
+                    print('ok')
                     download_success, video_path = self.download_video()
 
                     if download_success:
@@ -137,13 +205,4 @@ class StreamMonitor(threading.Thread):
 
     def stop(self) -> None:
         self.running = False
-        if self.current_process is not None:
-            logger.debug(f"Terminating streamlink process for {self.streamer_name}")
-            self.current_process.terminate()
-            try:
-                self.current_process.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                logger.debug("Process did not terminate in time; killing it")
-                self.current_process.kill()
-            self.current_process = None
         logger.debug(f"Stopped monitoring {self.streamer_name}")
