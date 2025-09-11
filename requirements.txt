@@ -1,7 +1,7 @@
 loguru==0.7.3
 moviepy==2.2.1
 numpy==2.1.3
-openai==1.107.0
+openai==1.107.1
 openai-whisper
 yt-dlp==2025.9.5
 requests==2.32.5
