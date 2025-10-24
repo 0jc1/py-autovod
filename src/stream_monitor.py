@@ -31,7 +31,7 @@ class StreamMonitor(threading.Thread):
             return False
 
         # Get stream source from config
-        match self.config.get("source", {}):
+        match self.config["source"]:
             case {"stream_source": stream_source}:
                 self.stream_source_url = determine_source(stream_source, self.streamer_name)
                 if not self.stream_source_url:

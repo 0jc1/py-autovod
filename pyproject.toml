@@ -9,6 +9,11 @@ version = "1.0.3"
 description = "Automatically download livestreams, clip with AI, and upload in realtime"
 authors = [{name = "0jc1", email = "52017130+0jc1@users.noreply.github.com"}]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+namespaces = true
+
 [project.scripts]
 autovod = "src.main:main"
 
