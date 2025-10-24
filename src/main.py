@@ -10,9 +10,13 @@ from stream_manager import StreamManager
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="AutoVOD - Automatic VOD downloader and uploader for Twitch, Kick, and YouTube")
+    parser = argparse.ArgumentParser(
+        description="AutoVOD - Automatic VOD downloader and uploader for Twitch, Kick, and YouTube"
+    )
     parser.add_argument("-n", "--name", help="Single streamer name to monitor")
-    parser.add_argument("-v", "--version", action="store_true", help="Display the current version")
+    parser.add_argument(
+        "-v", "--version", action="store_true", help="Display the current version"
+    )
     return parser.parse_args()
 
 

@@ -33,9 +33,13 @@ class StreamMonitor(threading.Thread):
         # Get stream source from config
         match self.config["source"]:
             case {"stream_source": stream_source}:
-                self.stream_source_url = determine_source(stream_source, self.streamer_name)
+                self.stream_source_url = determine_source(
+                    stream_source, self.streamer_name
+                )
                 if not self.stream_source_url:
-                    logger.error(f"Unknown stream source: {stream_source} for {self.streamer_name}")
+                    logger.error(
+                        f"Unknown stream source: {stream_source} for {self.streamer_name}"
+                    )
                     return False
             case _:
                 logger.error(f"Missing source configuration for {self.streamer_name}")
@@ -68,7 +72,7 @@ class StreamMonitor(threading.Thread):
             self.current_process = subprocess.Popen(
                 command, stdout=sys.stdout, stderr=subprocess.DEVNULL
             )
-            success = self.current_process.wait() == 0 # Wait until the stream ends
+            success = self.current_process.wait() == 0  # Wait until the stream ends
 
             if success:
                 if output_path and os.path.exists(output_path):
@@ -105,7 +109,9 @@ class StreamMonitor(threading.Thread):
                     download_success, video_path = self.download_video()
 
                     if download_success:
-                        logger.success(f"Stream for {self.streamer_name} downloaded successfully")
+                        logger.success(
+                            f"Stream for {self.streamer_name} downloaded successfully"
+                        )
                     else:
                         logger.warning(
                             f"Failed to download stream for {self.streamer_name}"

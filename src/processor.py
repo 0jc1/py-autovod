@@ -66,7 +66,9 @@ class Processor:
                 logger.error(f"Error encoding/saving video locally: {str(e)}")
 
             # Process with clipception
-            if CLIPCEPTION_ENABLED and streamer_config.getboolean("clipception", "enabled"):
+            if CLIPCEPTION_ENABLED and streamer_config.getboolean(
+                "clipception", "enabled"
+            ):
                 self._process_single_file(
                     new_video_path, streamer_name, upload_video=False
                 )

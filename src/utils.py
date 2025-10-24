@@ -77,7 +77,7 @@ def fetch_metadata(streamer_url: str) -> dict:
     except json.JSONDecodeError as e:
         print(f"JSON decode error: {e}")
         return None
-    
+
 
 def get_version_from_toml() -> str:
     """
@@ -86,7 +86,7 @@ def get_version_from_toml() -> str:
     Works with Python 3.10+.
     """
     path = Path("pyproject.toml")
-    try: 
+    try:
         if sys.version_info >= (3, 11):
             import tomllib
         else:
@@ -95,7 +95,7 @@ def get_version_from_toml() -> str:
         if not path.exists():
             raise FileNotFoundError(f"File {path} is missing!")
 
-        with open(path, "rb") as f: 
+        with open(path, "rb") as f:
             data = tomllib.load(f)
 
         return data.get("project", {}).get("version", "0.0.0")
@@ -106,7 +106,7 @@ def get_version_from_toml() -> str:
         #     return poetry_section["version"]
     except Exception as e:
         logger.error(f"Error getting version from {path}: {e}")
-    return "0.0.0" 
+    return "0.0.0"
 
 
 def load_config(config_name: str) -> configparser.ConfigParser | None:

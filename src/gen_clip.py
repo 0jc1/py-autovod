@@ -55,7 +55,7 @@ def rank_clips_chunk(clips: list[dict]) -> str:
     audio_weight = 40
     content_weight = 60
     max_retries = 4
-    retry_delay = 2 # seconds
+    retry_delay = 2  # seconds
 
     prompt = f"""
     You are an expert content analyzer focusing on viral clip potential. 

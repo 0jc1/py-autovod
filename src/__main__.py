@@ -8,5 +8,5 @@ if __name__ == "__main__":
         print("Error: Python 3.10 or higher is required")
         print("Current Python version: " + sys.version)
         sys.exit(1)
-    
+
     sys.exit(main())
