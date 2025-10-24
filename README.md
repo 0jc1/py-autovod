@@ -24,22 +24,26 @@ This project was originally based on [AutoVOD](https://github.com/jenslys/AutoVO
    . env/bin/activate
    pip install -r requirements.txt 
    ```
-   
-3. Configure the streamers you want to monitor in `config.ini`:
+3. Install from source using pip. 
+   ```bash
+   pip install -e . 
+   ```
+
+4. Configure the streamers you want to monitor in `config.ini`:
    ```ini
    [streamers]
    streamers = streamer1, streamer2, streamer3
    ```
 
-4. Create a configuration file for each streamer where the file name is the streamer's username. The default configuration file `default.ini` will be used otherwise.
+5. Create a configuration file for each streamer where the file name is the streamer's username. The default configuration file `default.ini` will be used otherwise.
 
-5. Configure the main configuration file `config.ini`. Downloaded VODs are processed into clips by default.
+6. Configure the main configuration file `config.ini`. Downloaded VODs are processed into clips by default.
 
-6. Copy the `.env.example` file to a new file called `.env`. Fill in the .env file with your API keys.
+7. Copy the `.env.example` file to a new file called `.env`. Fill in the .env file with your API keys.
 
-7. Run the command to start AutoVOD:
+8. Run the command to start AutoVOD:
    ```bash
-   python3 src/main.py
+   autovod
    ```
 
 ## Uploading 
