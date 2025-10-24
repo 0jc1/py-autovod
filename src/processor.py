@@ -8,8 +8,7 @@ from uploader import upload_youtube
 
 # clipception
 from transcription import process_video, MIN_DURATION
-from gen_clip import generate_clips
-from clip import process_clips
+from gen_clip import generate_clips, process_clips
 
 
 class Processor:
