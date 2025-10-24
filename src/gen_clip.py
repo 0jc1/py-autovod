@@ -1,12 +1,11 @@
 from openai import OpenAI
-from moviepy import VideoFileClip
 import os
 import json
 import time
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor
 from settings import config, API_KEY
-
+from utils import run_command
 
 model_name = config.get(
     "clipception.llm", "model_name", fallback="deepseek/deepseek-chat"
@@ -52,8 +51,8 @@ def rank_clips_chunk(clips: list[dict]) -> str:
         default_headers={"HTTP-Referer": "http://localhost", "X-Title": "Py-AutoVod"},
     )
 
-    audio_weight = 40
-    content_weight = 60
+    audio_weight = 30
+    content_weight = 70
     max_retries = 4
     retry_delay = 2  # seconds
 
@@ -71,7 +70,7 @@ def rank_clips_chunk(clips: list[dict]) -> str:
     - Acoustic characteristics
 
     2. Content Analysis ({content_weight}% weight):
-    - Topic relevance and timeliness
+   - Topic relevance and timeliness
     - Controversial or debate-sparking elements
     - "Quotable" phrases
     - Discussion potential
@@ -210,30 +209,44 @@ def generate_clips(
 
 
 def extract_clip(input_file, output_dir, clip_data):
-    """Extract a single clip based on the provided clip data"""
+    """Extract a single clip using ffmpeg ."""
     try:
-        # Create sanitized filename from clip name
+        # Sanitize clip name for filename
         safe_name = "".join(
             c for c in clip_data["name"] if c.isalnum() or c in (" ", "-", "_")
         ).rstrip()
         output_file = os.path.join(output_dir, f"{safe_name}.mp4")
 
-        # Load the video file
-        video = VideoFileClip(input_file)
+        # Ensure output directory exists
+        os.makedirs(output_dir, exist_ok=True)
 
-        # Extract the clip using start and end times from JSON
-        clip = video.subclipped(clip_data["start"], clip_data["end"])
+        start = str(clip_data["start"])
+        end = str(clip_data["end"])
 
-        # Write the clip to a new file
-        clip.write_videofile(output_file, codec="libx264")
+        # frame accurate extraction using ffmpeg
+        cmd = [
+            "ffmpeg",
+            "-y",                 # overwrite output
+            "-ss", start,         # start time
+            "-to", end,           # end time
+            "-i", input_file,     # input file
+            "-c:v", "libx264",
+            "-c:a", "aac",
+            output_file
+        ]
 
-        # Clean up
-        clip.close()
-        video.close()
+        result = run_command(cmd)
 
-        return True, output_file
+        # Check if ffmpeg succeeded
+        if result.returncode == 0 and os.path.exists(output_file):
+            print(f"Clip extracted: {output_file}")
+            return True, output_file
+        else:
+            print(f"FFmpeg failed with code {result.returncode}")
+            return False, f"FFmpeg failed with code {result.returncode}"
 
     except Exception as e:
+        print("Error during clip extraction")
         return False, str(e)
 
 

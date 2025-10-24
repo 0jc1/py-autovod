@@ -1,5 +1,4 @@
 loguru==0.7.3
-moviepy==2.2.1
 numpy==2.3.3
 openai==2.5.0
 openai-whisper
