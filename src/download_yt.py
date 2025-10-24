@@ -53,6 +53,7 @@ def download_video(url, output_dir, format_option):
 
         # Configure yt-dlp options
         ydl_opts = {
+            "extractor-arg": "youtube:player_client=web_safari",
             "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
             "outtmpl": os.path.join(output_dir, "%(title)s.%(ext)s"),
             "merge_output_format": "mp4",  # Ensures final output is MP4
