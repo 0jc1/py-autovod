@@ -226,13 +226,18 @@ def extract_clip(input_file, output_dir, clip_data):
         # frame accurate extraction using ffmpeg
         cmd = [
             "ffmpeg",
-            "-y",                 # overwrite output
-            "-ss", start,         # start time
-            "-to", end,           # end time
-            "-i", input_file,     # input file
-            "-c:v", "libx264",
-            "-c:a", "aac",
-            output_file
+            "-y",  # overwrite output
+            "-ss",
+            start,  # start time
+            "-to",
+            end,  # end time
+            "-i",
+            input_file,  # input file
+            "-c:v",
+            "libx264",
+            "-c:a",
+            "aac",
+            output_file,
         ]
 
         result = run_command(cmd)
