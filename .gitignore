@@ -21,6 +21,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+uv.lock
 MANIFEST
 
 
@@ -70,6 +71,7 @@ lib64
 # Media files
 *.ts 
 *.wav
+*.mkv
 *.mp3
 /recordings
 
