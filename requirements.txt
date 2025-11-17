@@ -2,7 +2,7 @@ loguru==0.7.3
 numpy==2.3.3
 openai==2.7.1
 openai-whisper
-yt-dlp==2025.10.22
+yt-dlp==2025.11.12
 requests==2.32.5
 python-dotenv==1.2.1
 soundfile==0.13.1
