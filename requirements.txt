@@ -1,6 +1,6 @@
 loguru==0.7.3
 numpy==2.3.3
-openai==2.7.1
+openai==2.8.0
 openai-whisper
 yt-dlp==2025.11.12
 requests==2.32.5
