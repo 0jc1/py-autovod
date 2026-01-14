@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "autovod"
-version = "1.0.3"
+version = "1.1.0"
 description = "Automatically download livestreams, clip with AI, and upload in realtime"
 readme = "README.md"
 license = "MIT"
