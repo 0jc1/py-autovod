@@ -10,7 +10,6 @@ except ImportError:
 
 try:
     import whisper
-    from whisper import load_model
 except ImportError:
     print("ERROR: Whisper is not installed. Please install with:")
     print("pip install openai-whisper")
@@ -22,10 +21,8 @@ import json
 import subprocess
 import time
 import numpy as np
-from datetime import timedelta
 from pydub import AudioSegment
 import librosa
-import soundfile as sf
 from settings import config
 
 # Global list for cleanup

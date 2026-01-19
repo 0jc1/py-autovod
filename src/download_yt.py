@@ -9,7 +9,6 @@ Usage: python download_yt.py [YouTube URL]
 import sys
 import os
 import argparse
-from pathlib import Path
 
 # Import yt-dlp here to avoid import error if not installed
 try:

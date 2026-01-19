@@ -79,8 +79,8 @@ class Processor:
                 try:
                     logger.info("Uploading video.")
                     upload_youtube(os.path.abspath(new_video_path))
-                except:
-                    pass
+                except Exception as e:
+                    logger.error(f"Upload failed: {str(e)}")
 
             logger.info(f"Finished processing: {new_video_path}")
 

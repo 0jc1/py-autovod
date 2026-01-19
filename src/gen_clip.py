@@ -279,7 +279,7 @@ def process_clips(input_file, output_dir, json_file, min_score=0):
                 failed_clips.append((clip["name"], result))  # keyerror name
 
     # Print summary
-    print(f"\nExtraction Summary:")
+    print("\nExtraction Summary:")
     print(f"Total clips processed: {len(successful_clips) + len(failed_clips)}")
     print(f"Successfully extracted: {len(successful_clips)}")
     print(f"Failed extractions: {len(failed_clips)}")
