@@ -1,4 +1,7 @@
-# Common Commit Message Types
+# Contributing
+There are many ways to get involved. Feature requests, PRs, bug reports are very helpful.
+
+## Common Commit Message Types
 
 | Type     | Meaning                                                      |
 |----------|--------------------------------------------------------------|
