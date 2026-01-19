@@ -8,13 +8,6 @@ except ImportError:
     print("pip install torch torchaudio")
     sys.exit(1)
 
-try:
-    import whisper
-except ImportError:
-    print("ERROR: Whisper is not installed. Please install with:")
-    print("pip install openai-whisper")
-    sys.exit(1)
-
 # Standard imports
 from pathlib import Path
 import json
@@ -24,6 +17,21 @@ import numpy as np
 from pydub import AudioSegment
 import librosa
 from settings import config
+
+transcription_engine = config.get("clipception.transcription", "engine", fallback="whisper")
+
+if transcription_engine == "faster-whisper":
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError:
+        print("ERROR: faster-whisper is not installed.")
+        sys.exit(1)
+else:
+    try:
+        import whisper
+    except ImportError:
+        print("ERROR: Whisper is not installed.")
+        sys.exit(1)
 
 # Global list for cleanup
 files_to_cleanup = []
@@ -179,24 +187,33 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
 
     transcribe_start = time.time()
 
-    # Configure FP16 based on CUDA support
-    fp16 = device == "cuda" and torch.cuda.is_bf16_supported()
-
-    if device == "cuda":
-        torch.cuda.init()
-
-    result = model.transcribe(str(audio_path), language="en", fp16=fp16)
+    # Transcribe based on engine type
+    if transcription_engine == "faster-whisper" and WhisperModel is not None:
+        # faster-whisper returns segments directly
+        segments, info = model.transcribe(str(audio_path), language="en")
+        result = {"segments": list(segments)}
+    else:
+        # Original whisper with FP16 support
+        fp16 = device == "cuda" and torch.cuda.is_bf16_supported()
+        if device == "cuda":
+            torch.cuda.init()
+        result = model.transcribe(str(audio_path), language="en", fp16=fp16)
 
     current_segments = []
     current_duration = 0.0
 
     for segment in result["segments"]:
-        audio_features = extract_audio_features(audio, segment["start"], segment["end"])
+        # Handle both faster-whisper (object attributes) and whisper (dict access)
+        start = segment.start if hasattr(segment, 'start') else segment["start"]
+        end = segment.end if hasattr(segment, 'end') else segment["end"]
+        text = segment.text if hasattr(segment, 'text') else segment["text"]
+        
+        audio_features = extract_audio_features(audio, start, end)
 
         enhanced_segment = {
-            "start": segment["start"],
-            "end": segment["end"],
-            "text": segment["text"],
+            "start": start,
+            "end": end,
+            "text": text,
             "audio_features": audio_features,
         }
 
@@ -238,16 +255,17 @@ def process_video(video_path):
         audio_path = extract_audio(video_path)
 
         # Model loading
-        print(f"Loading Whisper {model_size} model...")
-        model = whisper.load_model(model_size, device=device)
+        print(f"Loading {transcription_engine} {model_size} model for {device}...")
+        if transcription_engine == "faster-whisper":
+            model = WhisperModel(model_size, device=device, compute_type="float16" if device == "cuda" else "float32")
+        else:
+            model = whisper.load_model(model_size, device=device)
+            # Verify model device
+            print(f"Model is on device: {next(model.parameters()).device}")
 
-        # Verify model device
-        print(f"Model is on device: {next(model.parameters()).device}")
 
         if device == "cuda":
-            print(
-                f"GPU Memory allocated: {torch.cuda.memory_allocated()/1024**2:.2f} MB"
-            )
+            print(f"GPU Memory allocated: {torch.cuda.memory_allocated()/1024**2:.2f} MB")
             print(f"GPU Memory reserved: {torch.cuda.memory_reserved()/1024**2:.2f} MB")
 
         # Transcription
