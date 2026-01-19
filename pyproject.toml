@@ -6,13 +6,50 @@ build-backend = "setuptools.build_meta"
 name = "autovod"
 version = "1.1.0"
 description = "Automatically download livestreams, clip with AI, and upload in realtime"
-readme = "README.md"
+readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
 requires-python = ">=3.10"
 authors = [{ name = "0jc1", email = "52017130+0jc1@users.noreply.github.com" }]
+classifiers = [
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Multimedia :: Video",
+  "Topic :: Multimedia :: Video :: Capture",
+  "Topic :: Internet",
+  "Topic :: Software Development :: Automation"
+]
+keywords = [
+  "livestream",
+  "kick",
+  "autovod",
+  "automation",
+  "ai",
+  "clipper",
+  "ffmpeg",
+  "streamlink",
+  "twitch",
+  "youtube"
+]
+dependencies = [
+    "twine>=6.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "black",
+  "pytest",
+  "ruff",
+  "build",
+]
 
 [project.urls]
-Repository = "https://github.com/0jc1/py-autovod.git"
+Repository = "https://github.com/0jc1/py-autovod"
+Issues = "https://github.com/0jc1/py-autovod/issues"
+Documentation = "https://github.com/0jc1/py-autovod#readme"
+Changelog = "https://github.com/0jc1/py-autovod/releases"
 
 [project.scripts]
 autovod = "main:main"
