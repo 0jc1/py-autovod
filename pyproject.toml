@@ -19,7 +19,6 @@ classifiers = [
   "Topic :: Multimedia :: Video",
   "Topic :: Multimedia :: Video :: Capture",
   "Topic :: Internet",
-  "Topic :: Software Development :: Automation"
 ]
 keywords = [
   "livestream",
