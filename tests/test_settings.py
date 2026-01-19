@@ -14,6 +14,7 @@ class TestSettings:
         """Test that settings module imports without errors"""
         try:
             import settings
+
             assert True
         except ImportError as e:
             pytest.fail(f"Failed to import settings: {e}")

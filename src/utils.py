@@ -33,7 +33,7 @@ def determine_source(stream_source: str, streamer_name: str) -> str | None:
     if not (stream_source and streamer_name):
         logger.error("Stream source and streamer name cannot be empty")
         return None
-    
+
     streamer_name = streamer_name.strip().lower()
     stream_source = stream_source.strip().lower()
 

@@ -6,12 +6,8 @@ from unittest.mock import patch
 # Add src to path to import utils
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from utils import (
-    determine_source,
-    is_docker,
-    get_size,
-    load_config,
-)
+from utils import determine_source, is_docker, get_size, load_config
+
 
 class TestDetermineSource:
     """Test cases for determine_source function"""
