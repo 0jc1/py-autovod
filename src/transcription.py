@@ -188,7 +188,7 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
     transcribe_start = time.time()
 
     # Transcribe based on engine type
-    if transcription_engine == "faster-whisper" and WhisperModel is not None:
+    if transcription_engine == "faster-whisper":
         # faster-whisper returns segments directly
         segments, info = model.transcribe(str(audio_path), language="en")
         result = {"segments": list(segments)}
@@ -243,9 +243,8 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
 def process_video(video_path):
     global device
 
-    if not check_cuda():
-        device = "cpu"
-
+    device = "cpu" if not check_cuda() else device
+    
     process_start = time.time()
     video_file = Path(video_path)
     transcription_path = video_file.with_suffix(".enhanced_transcription.json")
