@@ -30,16 +30,21 @@ def is_docker() -> bool:
 
 
 def determine_source(stream_source: str, streamer_name: str) -> str | None:
-    if not stream_source or not streamer_name:
+    if not (stream_source and streamer_name):
         logger.error("Stream source and streamer name cannot be empty")
         return None
+    
+    streamer_name = streamer_name.strip().lower()
+    stream_source = stream_source.strip().lower()
 
     sources: dict[str, str] = {
         "twitch": f"twitch.tv/{streamer_name}",
         "kick": f"kick.com/{streamer_name}",
         "youtube": f"youtube.com/@{streamer_name}/live",
+        "rumble": f"rumble.com/user/{streamer_name}",
+        "dlive": f"dlive.tv/{streamer_name}",
     }
-    return sources.get(stream_source.lower())
+    return sources.get(stream_source)
 
 
 def check_stream_live(url: str) -> bool:
@@ -63,7 +68,8 @@ def get_size(path: str) -> float:
 
 def fetch_metadata(streamer_url: str) -> dict:
     try:
-        time.sleep(25)
+        # TODO: fix this code smell
+        time.sleep(22)
         result = subprocess.run(
             ["streamlink", "--json", streamer_url],
             capture_output=True,
@@ -99,11 +105,6 @@ def get_version_from_toml() -> str:
             data = tomllib.load(f)
 
         return data.get("project", {}).get("version", "0.0.0")
-
-        # Poetry format
-        # poetry_section = data.get("tool", {}).get("poetry", {})
-        # if "version" in poetry_section:
-        #     return poetry_section["version"]
     except Exception as e:
         logger.error(f"Error getting version from {path}: {e}")
     return "0.0.0"

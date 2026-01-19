@@ -33,9 +33,7 @@ keywords = [
   "twitch",
   "youtube"
 ]
-dependencies = [
-    "twine>=6.2.0",
-]
+
 
 [project.optional-dependencies]
 dev = [
