@@ -4,7 +4,6 @@
 [![Issues](https://img.shields.io/github/issues/0jc1/py-autovod.svg)](https://github.com/0jc1/py-autovod/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/0jc1/py-autovod.svg)](https://github.com/0jc1/py-autovod/commits/main)
 [![Stars](https://img.shields.io/github/stars/0jc1/py-autovod.svg)](https://github.com/0jc1/py-autovod/stargazers)
-[![Forks](https://img.shields.io/github/forks/0jc1/py-autovod.svg)](https://github.com/0jc1/py-autovod/network)
 
 <b>Py-AutoVOD</b> is a Python3 program that automates the downloading and uploading of livestreams from multiple streaming services. It has many configurable features for stream VODs, such as formatting, transcribing, and AI-powered clipping.
 This project was originally based on [AutoVOD](https://github.com/jenslys/AutoVOD).
