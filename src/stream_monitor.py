@@ -5,7 +5,7 @@ import threading
 import subprocess
 import datetime
 from logger import logger
-from utils import determine_source, check_stream_live, load_config, fetch_metadata
+from utils import determine_source, check_stream_live, load_config, fetch_metadata, StreamPlatform
 from processor import processor
 
 
@@ -15,12 +15,13 @@ class StreamMonitor(threading.Thread):
     def __init__(self, streamer_name: str, retry_delay: int = 60):
         super().__init__(name=f"m-{streamer_name}")
         self.streamer_name = streamer_name.lower()
-        self.DATETIME_FORMAT = "%d-%m-%Y-%H-%M-%S"
+        self.datetime_format = "%d-%m-%Y-%H-%M-%S"
         self.retry_delay = retry_delay
         self.running = False
         self.config = None
         self.stream_metadata = {}
         self.stream_source_url = None
+        self.stream_platform: StreamPlatform | None = None
         self.current_process = None  # Store the running streamlink subprocess
         self._load_configuration()
 
@@ -33,12 +34,11 @@ class StreamMonitor(threading.Thread):
         # Get stream source from config
         match self.config["source"]:
             case {"stream_source": stream_source}:
-                self.stream_source_url = determine_source(
-                    stream_source, self.streamer_name
-                )
+                self.stream_platform = StreamPlatform.from_string(stream_source)
+                self.stream_source_url = determine_source(self.stream_platform, self.streamer_name)
                 if not self.stream_source_url:
                     logger.error(
-                        f"Unknown stream source: {stream_source} for {self.streamer_name}"
+                        f"Failed to determine stream source URL for {self.streamer_name}"
                     )
                     return False
             case _:
@@ -47,12 +47,35 @@ class StreamMonitor(threading.Thread):
 
         return True
 
+    def _get_youtube_stream_url(self, url: str) -> str | None:
+        """Use yt-dlp to get the direct stream URL for YouTube live streams."""
+        try:
+            result = subprocess.run(
+                ["yt-dlp", url, "--get-url", "-f", "best"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                direct_url = result.stdout.strip()
+                logger.debug(f"Got direct stream URL from yt-dlp: {direct_url[:80]}...")
+                return direct_url
+            else:
+                logger.warning(f"yt-dlp failed to get stream URL: {result.stderr}")
+                return None
+        except subprocess.TimeoutExpired:
+            logger.error("yt-dlp timed out while getting stream URL")
+            return None
+        except Exception as e:
+            logger.error(f"Error running yt-dlp: {e}")
+            return None
+
     def download_video(self) -> tuple[bool, str]:
         if not self.config:
             return False, ""
 
         quality = self.config["streamlink"]["quality"]
-        current_time = datetime.datetime.now().strftime(self.DATETIME_FORMAT)
+        current_time = datetime.datetime.now().strftime(self.datetime_format)
         stream_title = self.stream_metadata.get("title", "")
         stream_id = self.stream_metadata.get("id", current_time)
 
@@ -61,7 +84,18 @@ class StreamMonitor(threading.Thread):
         output_dir = os.path.dirname(output_path)
         os.makedirs(output_dir, exist_ok=True)
 
-        command = ["streamlink", "-o", output_path, self.stream_source_url, quality]
+        # For YouTube, use yt-dlp to get the direct stream URL first
+        # This is a workaround for YouTube Live streams that stopped working with streamlink directly
+        stream_url = self.stream_source_url
+        if self.stream_platform == StreamPlatform.YOUTUBE:
+            logger.info("YouTube source detected, using yt-dlp to get direct stream URL...")
+            direct_url = self._get_youtube_stream_url(self.stream_source_url)
+            if direct_url:
+                stream_url = direct_url
+            else:
+                logger.warning("Failed to get direct URL from yt-dlp, falling back to original URL")
+
+        command = ["streamlink", "-o", output_path, stream_url, quality]
 
         if self.config.has_option("streamlink", "flags"):
             flags = self.config.get("streamlink", "flags").strip(",").split(",")

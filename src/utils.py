@@ -1,11 +1,30 @@
 import os
 import sys
 import subprocess
+from enum import Enum
 from logger import logger
 from pathlib import Path
 import configparser
 import json
 import time
+
+
+class StreamPlatform(Enum):
+    """Supported streaming platforms."""
+    TWITCH = "twitch"
+    KICK = "kick"
+    YOUTUBE = "youtube"
+    RUMBLE = "rumble"
+    DLIVE = "dlive"
+
+    @classmethod
+    def from_string(cls, value: str) -> "StreamPlatform | None":
+        """Convert a string to a StreamPlatform enum, or None if invalid."""
+        value = value.strip().lower()
+        for platform in cls:
+            if platform.value == value:
+                return platform
+        return None
 
 
 def run_command(
@@ -29,20 +48,20 @@ def is_docker() -> bool:
     return os.path.exists("/.dockerenv")
 
 
-def determine_source(stream_source: str, streamer_name: str) -> str | None:
+def determine_source(stream_source: StreamPlatform, streamer_name: str) -> str | None:
     if not (stream_source and streamer_name):
         logger.error("Stream source and streamer name cannot be empty")
         return None
 
     streamer_name = streamer_name.strip().lower()
-    stream_source = stream_source.strip().lower()
 
-    sources: dict[str, str] = {
-        "twitch": f"twitch.tv/{streamer_name}",
-        "kick": f"kick.com/{streamer_name}",
-        "youtube": f"youtube.com/@{streamer_name}/live",
-        "rumble": f"rumble.com/user/{streamer_name}",
-        "dlive": f"dlive.tv/{streamer_name}",
+
+    sources: dict[StreamPlatform, str] = {
+        StreamPlatform.TWITCH: f"twitch.tv/{streamer_name}",
+        StreamPlatform.KICK: f"kick.com/{streamer_name}",
+        StreamPlatform.YOUTUBE: f"youtube.com/@{streamer_name}/live",
+        StreamPlatform.RUMBLE: f"rumble.com/user/{streamer_name}",
+        StreamPlatform.DLIVE: f"dlive.tv/{streamer_name}",
     }
     return sources.get(stream_source)
 

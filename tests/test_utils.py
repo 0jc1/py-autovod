@@ -6,7 +6,7 @@ from unittest.mock import patch
 # Add src to path to import utils
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from utils import determine_source, is_docker, get_size, load_config
+from utils import determine_source, is_docker, get_size, load_config, StreamPlatform
 
 
 class TestDetermineSource:
@@ -14,42 +14,56 @@ class TestDetermineSource:
 
     def test_twitch_source(self):
         """Test Twitch source URL generation"""
-        result = determine_source("twitch", "channelname")
+        result = determine_source(StreamPlatform.TWITCH, "channelname")
         assert result == "twitch.tv/channelname"
 
     def test_kick_source(self):
         """Test Kick source URL generation"""
-        result = determine_source("kick", "channelname")
+        result = determine_source(StreamPlatform.KICK, "channelname")
         assert result == "kick.com/channelname"
 
     def test_youtube_source(self):
         """Test YouTube source URL generation"""
-        result = determine_source("youtube", "channelname")
+        result = determine_source(StreamPlatform.YOUTUBE, "channelname")
         assert result == "youtube.com/@channelname/live"
 
     def test_case_insensitive(self):
-        """Test that source is case-insensitive"""
-        result = determine_source("TWITCH", "Streamer")
+        """Test that streamer name is case-insensitive"""
+        result = determine_source(StreamPlatform.TWITCH, "Streamer")
         assert result == "twitch.tv/streamer"
-
-    def test_invalid_source(self):
-        """Test invalid source returns None"""
-        result = determine_source("invalid", "streamer")
-        assert result is None
-
-    def test_empty_source(self):
-        """Test empty source returns None"""
-        result = determine_source("", "streamer")
-        assert result is None
 
     def test_empty_streamer(self):
         """Test empty streamer name returns None"""
-        result = determine_source("twitch", "")
+        result = determine_source(StreamPlatform.TWITCH, "")
         assert result is None
 
-    def test_both_empty(self):
-        """Test both parameters empty returns None"""
-        result = determine_source("", "")
+
+class TestStreamPlatform:
+    """Test cases for StreamPlatform enum"""
+
+    def test_from_string_twitch(self):
+        """Test converting 'twitch' string to enum"""
+        result = StreamPlatform.from_string("twitch")
+        assert result == StreamPlatform.TWITCH
+
+    def test_from_string_youtube(self):
+        """Test converting 'youtube' string to enum"""
+        result = StreamPlatform.from_string("youtube")
+        assert result == StreamPlatform.YOUTUBE
+
+    def test_from_string_case_insensitive(self):
+        """Test that from_string is case-insensitive"""
+        result = StreamPlatform.from_string("TWITCH")
+        assert result == StreamPlatform.TWITCH
+
+    def test_from_string_invalid(self):
+        """Test invalid string returns None"""
+        result = StreamPlatform.from_string("invalid")
+        assert result is None
+
+    def test_from_string_empty(self):
+        """Test empty string returns None"""
+        result = StreamPlatform.from_string("")
         assert result is None
 
 
