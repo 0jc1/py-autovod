@@ -33,13 +33,15 @@ keywords = [
   "youtube"
 ]
 
-
 [project.optional-dependencies]
 dev = [
   "black",
   "pytest",
   "ruff",
   "build",
+]
+test = [
+    "pytest",
 ]
 
 [project.urls]
