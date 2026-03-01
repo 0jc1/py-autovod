@@ -40,10 +40,12 @@ dev = [
   "ruff",
   "build",
   "loguru",
+  "dotenv",
 ]
 test = [
     "pytest",
     "loguru",
+    "dotenv",
 ]
 
 [project.urls]
