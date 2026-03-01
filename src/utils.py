@@ -11,6 +11,7 @@ import time
 
 class StreamPlatform(Enum):
     """Supported streaming platforms."""
+
     TWITCH = "twitch"
     KICK = "kick"
     YOUTUBE = "youtube"
@@ -54,7 +55,6 @@ def determine_source(stream_source: StreamPlatform, streamer_name: str) -> str |
         return None
 
     streamer_name = streamer_name.strip().lower()
-
 
     sources: dict[StreamPlatform, str] = {
         StreamPlatform.TWITCH: f"twitch.tv/{streamer_name}",

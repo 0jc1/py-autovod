@@ -18,7 +18,9 @@ from pydub import AudioSegment
 import librosa
 from settings import config
 
-transcription_engine = config.get("clipception.transcription", "engine", fallback="whisper")
+transcription_engine = config.get(
+    "clipception.transcription", "engine", fallback="whisper"
+)
 
 if transcription_engine == "faster-whisper":
     try:
@@ -204,10 +206,10 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
 
     for segment in result["segments"]:
         # Handle both faster-whisper (object attributes) and whisper (dict access)
-        start = segment.start if hasattr(segment, 'start') else segment["start"]
-        end = segment.end if hasattr(segment, 'end') else segment["end"]
-        text = segment.text if hasattr(segment, 'text') else segment["text"]
-        
+        start = segment.start if hasattr(segment, "start") else segment["start"]
+        end = segment.end if hasattr(segment, "end") else segment["end"]
+        text = segment.text if hasattr(segment, "text") else segment["text"]
+
         audio_features = extract_audio_features(audio, start, end)
 
         enhanced_segment = {
@@ -244,7 +246,7 @@ def process_video(video_path):
     global device
 
     device = "cpu" if not check_cuda() else device
-    
+
     process_start = time.time()
     video_file = Path(video_path)
     transcription_path = video_file.with_suffix(".enhanced_transcription.json")
@@ -256,15 +258,20 @@ def process_video(video_path):
         # Model loading
         print(f"Loading {transcription_engine} {model_size} model for {device}...")
         if transcription_engine == "faster-whisper":
-            model = WhisperModel(model_size, device=device, compute_type="float16" if device == "cuda" else "float32")
+            model = WhisperModel(
+                model_size,
+                device=device,
+                compute_type="float16" if device == "cuda" else "float32",
+            )
         else:
             model = whisper.load_model(model_size, device=device)
             # Verify model device
             print(f"Model is on device: {next(model.parameters()).device}")
 
-
         if device == "cuda":
-            print(f"GPU Memory allocated: {torch.cuda.memory_allocated()/1024**2:.2f} MB")
+            print(
+                f"GPU Memory allocated: {torch.cuda.memory_allocated()/1024**2:.2f} MB"
+            )
             print(f"GPU Memory reserved: {torch.cuda.memory_reserved()/1024**2:.2f} MB")
 
         # Transcription

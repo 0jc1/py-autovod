@@ -5,7 +5,13 @@ import threading
 import subprocess
 import datetime
 from logger import logger
-from utils import determine_source, check_stream_live, load_config, fetch_metadata, StreamPlatform
+from utils import (
+    determine_source,
+    check_stream_live,
+    load_config,
+    fetch_metadata,
+    StreamPlatform,
+)
 from processor import processor
 
 
@@ -35,7 +41,9 @@ class StreamMonitor(threading.Thread):
         match self.config["source"]:
             case {"stream_source": stream_source}:
                 self.stream_platform = StreamPlatform.from_string(stream_source)
-                self.stream_source_url = determine_source(self.stream_platform, self.streamer_name)
+                self.stream_source_url = determine_source(
+                    self.stream_platform, self.streamer_name
+                )
                 if not self.stream_source_url:
                     logger.error(
                         f"Failed to determine stream source URL for {self.streamer_name}"
@@ -88,12 +96,16 @@ class StreamMonitor(threading.Thread):
         # This is a workaround for YouTube Live streams that stopped working with streamlink directly
         stream_url = self.stream_source_url
         if self.stream_platform == StreamPlatform.YOUTUBE:
-            logger.info("YouTube source detected, using yt-dlp to get direct stream URL...")
+            logger.info(
+                "YouTube source detected, using yt-dlp to get direct stream URL..."
+            )
             direct_url = self._get_youtube_stream_url(self.stream_source_url)
             if direct_url:
                 stream_url = direct_url
             else:
-                logger.warning("Failed to get direct URL from yt-dlp, falling back to original URL")
+                logger.warning(
+                    "Failed to get direct URL from yt-dlp, falling back to original URL"
+                )
 
         command = ["streamlink", "-o", output_path, stream_url, quality]
 
