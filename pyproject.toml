@@ -39,9 +39,11 @@ dev = [
   "pytest",
   "ruff",
   "build",
+  "loguru",
 ]
 test = [
     "pytest",
+    "loguru",
 ]
 
 [project.urls]
