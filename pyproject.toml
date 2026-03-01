@@ -10,6 +10,23 @@ readme = { file = "README.md", content-type = "text/markdown" }
 license = "MIT"
 requires-python = ">=3.10"
 authors = [{ name = "0jc1", email = "52017130+0jc1@users.noreply.github.com" }]
+dependencies = [
+  "loguru>=0.7.0",
+  "numpy<2.4",
+  "openai>=2.21.0",
+  "openai-whisper",
+  "faster-whisper",
+  "yt-dlp>=2026.2.21",
+  "requests>=2.32.0",
+  "python-dotenv>=1.2.0",
+  "soundfile>=0.13.0",
+  "pydub>=0.25.0",
+  "torch",
+  "torchaudio",
+  "torchvision",
+  "librosa>=0.11.0",
+  "tqdm>=4.67.0",
+]
 classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
