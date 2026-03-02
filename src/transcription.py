@@ -40,6 +40,7 @@ files_to_cleanup = []
 MIN_DURATION = config.getfloat("clipception", "clip_duration")
 model_size = config.get("clipception.transcription", "model_size")
 device = config.get("clipception.transcription", "device")
+language = config.get("clipception.transcription", "language", fallback="en")
 
 
 def format_time(seconds):
@@ -192,14 +193,14 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
     # Transcribe based on engine type
     if transcription_engine == "faster-whisper":
         # faster-whisper returns segments directly
-        segments, info = model.transcribe(str(audio_path), language="en")
+        segments, info = model.transcribe(str(audio_path), language=language)
         result = {"segments": list(segments)}
     else:
         # Original whisper with FP16 support
         fp16 = device == "cuda" and torch.cuda.is_bf16_supported()
         if device == "cuda":
             torch.cuda.init()
-        result = model.transcribe(str(audio_path), language="en", fp16=fp16)
+        result = model.transcribe(str(audio_path), language=language, fp16=fp16)
 
     current_segments = []
     current_duration = 0.0
