@@ -68,7 +68,8 @@ def extract_audio_features(audio_segment, start_time, end_time):
     """Extract audio features for a segment including volume and characteristics"""
     start_sample = int(start_time * 1000)
     end_sample = int(end_time * 1000)
-    segment = audio_segment[start_sample:end_sample]
+    # Downsample to 8000Hz for faster feature extraction
+    segment = audio_segment[start_sample:end_sample].set_frame_rate(8000)
 
     samples = np.array(segment.get_array_of_samples())
 
