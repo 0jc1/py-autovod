@@ -5,27 +5,31 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   pytest:
     name: tests
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"  # change from 3.13 → stable available version
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          python-version: "3.13"
           enable-cache: true
 
-      - name: Install test dependencies only
-        run: |
-          uv pip install .[test]
+      - name: Install test dependencies
+        run: uv pip install ".[test]"
 
       - name: Run tests
         run: pytest
