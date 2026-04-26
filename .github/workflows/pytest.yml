@@ -26,13 +26,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
+          python-version: "3.12"
           enable-cache: true
 
-      - name: Create virtual environment
-        run: uv venv
-
-      - name: Install test dependencies
-        run: uv pip install ".[test]"
-
       - name: Run tests
-        run: uv run pytest
+        run: uv run --with ".[test]" pytest
