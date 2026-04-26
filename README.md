@@ -8,6 +8,8 @@
 <b>Py-AutoVOD</b> is a Python3 program that automates the downloading and uploading of livestreams from multiple streaming services. It has many configurable features for stream VODs, such as formatting, transcribing, and AI-powered clipping.
 This project was originally based on [AutoVOD](https://github.com/jenslys/AutoVOD).
 
+Join the early access waitlist to use [autovod.ai](https://autovod.ai)
+
 ## Features
 - ( :heavy_check_mark: ) Auto download livestreams (Twitch.tv, Kick.tv, Youtube Live) from multiple streamers concurrently
 - ( :heavy_check_mark: ) Audio transcription with timestamps
