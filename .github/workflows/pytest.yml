@@ -21,15 +21,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"  # change from 3.13 → stable available version
+          python-version: "3.12"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
 
+      - name: Create virtual environment
+        run: uv venv
+
       - name: Install test dependencies
         run: uv pip install ".[test]"
 
       - name: Run tests
-        run: pytest
+        run: uv run pytest
