@@ -154,7 +154,9 @@ class Processor:
 
     def _encode(self, video_path, streamer_config):
         try:
-            output_path = ""
+            input_path = os.fspath(video_path)
+            base_path, extension = os.path.splitext(input_path)
+            output_path = f"{base_path}.reencoded{extension}"
             codec = streamer_config.get("encoding", "codec", fallback="libx265")
             crf = streamer_config.get("encoding", "crf", fallback="25")
             preset = streamer_config.get("encoding", "preset", fallback="medium")
@@ -164,7 +166,7 @@ class Processor:
             ffmpeg_cmd = [
                 "ffmpeg",
                 "-i",
-                video_path,
+                input_path,
                 "-c:v",
                 codec,
                 "-crf",
