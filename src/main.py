@@ -53,5 +53,3 @@ if __name__ == "__main__":
         print("Current Python version: " + sys.version)
         sys.exit(1)
     sys.exit(main())
-
-// Contributed via automated bounty system
