@@ -130,7 +130,6 @@ def extract_audio(video_path):
         check=True,
     )
 
-    global files_to_cleanup
     files_to_cleanup.append(str(audio_path))
     return audio_path
 
@@ -197,7 +196,10 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
         result = {"segments": list(segments)}
     else:
         # Original whisper with FP16 support
-        fp16 = device == "cuda" and (torch.cuda.is_bf16_supported() or torch.cuda.get_device_capability(0)[0] >= 5)
+        fp16 = device == "cuda" and (
+            torch.cuda.is_bf16_supported()
+            or torch.cuda.get_device_capability(0)[0] >= 5
+        )
         if device == "cuda":
             torch.cuda.init()
         result = model.transcribe(str(audio_path), language=language, fp16=fp16)

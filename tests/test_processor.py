@@ -41,7 +41,9 @@ def test_encode_writes_to_reencoded_output_path():
     completed = subprocess.CompletedProcess(args=[], returncode=0)
 
     with patch("processor.run_command", return_value=completed) as run_command:
-        output_path = Processor._encode(object.__new__(Processor), "/tmp/input.mp4", streamer_config)
+        output_path = Processor._encode(
+            object.__new__(Processor), "/tmp/input.mp4", streamer_config
+        )
 
     assert output_path == "/tmp/input.reencoded.mp4"
     run_command.assert_called_once_with(
@@ -70,13 +72,20 @@ def test_encode_preserves_extensionless_input_names():
     completed = subprocess.CompletedProcess(args=[], returncode=0)
 
     with patch("processor.run_command", return_value=completed):
-        output_path = Processor._encode(object.__new__(Processor), Path("recording"), streamer_config)
+        output_path = Processor._encode(
+            object.__new__(Processor), Path("recording"), streamer_config
+        )
 
     assert output_path == "recording.reencoded"
+
+
 def test_convert_builds_valid_shorts_ffmpeg_command():
     processor = object.__new__(Processor)
 
-    with patch("processor.MIN_DURATION", 60), patch("processor.run_command") as run_command:
+    with (
+        patch("processor.MIN_DURATION", 60),
+        patch("processor.run_command") as run_command,
+    ):
         output_path = processor._convert("/tmp/recordings/input.ts")
 
     assert output_path == "/tmp/recordings/input.mp4"
