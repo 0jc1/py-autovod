@@ -43,15 +43,15 @@ jobs:
         black . --check
 
     # Step 6: Automatically format code with black and commit changes if formatting issues are found
-    - name: Format Code with Black
-      if: failure()  # This step runs only if the previous step failed (i.e., formatting issues exist)
-      run: |
-        black .
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        git add .
-        git commit -m "✨ Auto-format code with black"
-        git push
-      env:
-        # GitHub automatically provides GITHUB_TOKEN to authenticate
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # - name: Format Code with Black
+    #   if: failure()  # This step runs only if the previous step failed (i.e., formatting issues exist)
+    #   run: |
+    #     black .
+    #     git config --local user.email "github-actions[bot]@users.noreply.github.com"
+    #     git config --local user.name "github-actions[bot]"
+    #     git add .
+    #     git commit -m "✨ Auto-format code with black"
+    #     git push
+    #   env:
+    #     # GitHub automatically provides GITHUB_TOKEN to authenticate
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
