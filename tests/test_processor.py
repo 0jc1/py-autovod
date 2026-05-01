@@ -4,6 +4,9 @@ import subprocess
 import sys
 import types
 from pathlib import Path
+import os
+import sys
+import types
 from unittest.mock import patch
 
 # Add src to path to import processor
@@ -70,3 +73,23 @@ def test_encode_preserves_extensionless_input_names():
         output_path = Processor._encode(object.__new__(Processor), Path("recording"), streamer_config)
 
     assert output_path == "recording.reencoded"
+def test_convert_builds_valid_shorts_ffmpeg_command():
+    processor = object.__new__(Processor)
+
+    with patch("processor.MIN_DURATION", 60), patch("processor.run_command") as run_command:
+        output_path = processor._convert("/tmp/recordings/input.ts")
+
+    assert output_path == "/tmp/recordings/input.mp4"
+    assert run_command.call_args_list[1].args[0] == [
+        "ffmpeg",
+        "-i",
+        "/tmp/recordings/input.mp4",
+        "-vf",
+        "scale=1080:1920:force_original_aspect_ratio=decrease,"
+        "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1",
+        "-c",
+        "copy",
+        "/tmp/recordings/shorts_input.mp4",
+        "-loglevel",
+        "error",
+    ]
