@@ -67,6 +67,7 @@ lib64
 *.ini
 !config.ini
 !default.ini
+!tests/data/*.ini
 
 # Media files
 *.ts 
