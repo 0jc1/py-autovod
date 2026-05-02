@@ -78,22 +78,8 @@ class StreamMonitor(threading.Thread):
             logger.error(f"Error running yt-dlp: {e}")
             return None
 
-    def _construct_streamlink_command(self, stream_url, output_path) -> list[str]:
+    def _construct_streamlink_command(self, output_path) -> list[str]:
         quality = self.config["streamlink"]["quality"]
-        return ["streamlink", "-o", output_path, stream_url, quality]
-
-    def download_video(self) -> tuple[bool, str]:
-        if not self.config:
-            return False, ""
-
-        current_time = datetime.datetime.now().strftime(self.datetime_format)
-        stream_title = self.stream_metadata.get("title", "")
-        stream_id = self.stream_metadata.get("id", current_time)
-
-        output_path = f"recordings/{self.streamer_name}/{stream_id}/{stream_title}-{self.streamer_name}-{current_time}.ts"
-
-        output_dir = os.path.dirname(output_path)
-        os.makedirs(output_dir, exist_ok=True)
 
         # For YouTube, use yt-dlp to get the direct stream URL first
         # This is a workaround for YouTube Live streams that stopped working with streamlink directly
@@ -109,6 +95,21 @@ class StreamMonitor(threading.Thread):
                 logger.warning(
                     "Failed to get direct URL from yt-dlp, falling back to original URL"
                 )
+
+        return ["streamlink", "-o", output_path, stream_url, quality]
+
+    def download_video(self) -> tuple[bool, str]:
+        if not self.config:
+            return False, ""
+
+        current_time = datetime.datetime.now().strftime(self.datetime_format)
+        stream_title = self.stream_metadata.get("title", "")
+        stream_id = self.stream_metadata.get("id", current_time)
+
+        output_path = f"recordings/{self.streamer_name}/{stream_id}/{stream_title}-{self.streamer_name}-{current_time}.ts"
+
+        output_dir = os.path.dirname(output_path)
+        os.makedirs(output_dir, exist_ok=True)
 
         command = self._construct_streamlink_command(stream_url, output_path)
 
