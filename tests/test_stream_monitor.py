@@ -14,36 +14,34 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 class TestStreamMonitor:
     """Test cases for StreamMonitor class"""
 
-    def test_streamlink_command_construction(self):
+    @pytest.fixture
+    def monitor(self):
+        # Patch _load_configuration to control config loading
+        with patch.object(StreamMonitor, "_load_configuration", return_value=True):
+            monitor = StreamMonitor("streamername")
+        monitor.stream_source_url = "twitch.tv/streamername"
+        return monitor
+
+    def test_streamlink_command_construction(self, monitor):
         """Test streamlink command is constructed correctly from config"""
-        with patch.object(StreamMonitor, "_load_configuration", return_value=True):
-            monitor = StreamMonitor("streamername")
-            monitor.stream_source_url = "twitch.tv/streamername"
-            monitor.config = configparser.ConfigParser()
-            # Populate config directly
-            monitor.config.read_dict({"streamlink": {"quality": "1080p60,720p,best"}})
-            command = monitor._construct_streamlink_command("output/path")
-            assert command[-1] == "1080p60,720p,best"
+        monitor.config = configparser.ConfigParser()
+        # Populate config directly
+        monitor.config.read_dict({"streamlink": {"quality": "1080p60,720p,best"}})
+        command = monitor._construct_streamlink_command("output/path")
+        assert command[-1] == "1080p60,720p,best"
 
-
-    def test_quality_config_with_fallbacks(self):
+    def test_quality_config_with_fallbacks(self, monitor):
         """Test quality fallback is read correctly from config file"""
-        with patch.object(StreamMonitor, "_load_configuration", return_value=True):
-            monitor = StreamMonitor("streamername")
-            monitor.stream_source_url = "twitch.tv/streamername"
-            # Load stubbed config file
-            monitor.config = load_config("tests/data/quality_fallback")
+        # Load stubbed config file
+        monitor.config = load_config("tests/data/quality_fallback")
 
-            command = monitor._construct_streamlink_command("output/path")
-            assert command[-1] == "1080p60,720p,best"
+        command = monitor._construct_streamlink_command("output/path")
+        assert command[-1] == "1080p60,720p,best"
 
-    def test_quality_config_with_single_value(self):
+    def test_quality_config_with_single_value(self, monitor):
         """Test streamlink single-value quality is read correctly from config file"""
-        with patch.object(StreamMonitor, "_load_configuration", return_value=True):
-            monitor = StreamMonitor("streamername")
-            monitor.stream_source_url = "twitch.tv/streamername"
-            # Load stubbed config file
-            monitor.config = load_config("tests/data/quality_non_fallback")
+        # Load stubbed config file
+        monitor.config = load_config("tests/data/quality_non_fallback")
 
-            command = monitor._construct_streamlink_command("output/path")
-            assert command[-1] == "best"
+        command = monitor._construct_streamlink_command("output/path")
+        assert command[-1] == "best"
