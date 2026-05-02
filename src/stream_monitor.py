@@ -78,11 +78,14 @@ class StreamMonitor(threading.Thread):
             logger.error(f"Error running yt-dlp: {e}")
             return None
 
+    def _construct_streamlink_command(self, stream_url, output_path) -> list[str]:
+        quality = self.config["streamlink"]["quality"]
+        return ["streamlink", "-o", output_path, stream_url, quality]
+
     def download_video(self) -> tuple[bool, str]:
         if not self.config:
             return False, ""
 
-        quality = self.config["streamlink"]["quality"]
         current_time = datetime.datetime.now().strftime(self.datetime_format)
         stream_title = self.stream_metadata.get("title", "")
         stream_id = self.stream_metadata.get("id", current_time)
@@ -107,7 +110,7 @@ class StreamMonitor(threading.Thread):
                     "Failed to get direct URL from yt-dlp, falling back to original URL"
                 )
 
-        command = ["streamlink", "-o", output_path, stream_url, quality]
+        command = self._construct_streamlink_command(stream_url, output_path)
 
         if self.config.has_option("streamlink", "flags"):
             flags = self.config.get("streamlink", "flags").strip(",").split(",")
