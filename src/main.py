@@ -48,8 +48,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    if sys.version_info < (3, 9):
-        print("Error: Python 3.9 or higher is required")
+    if sys.version_info < (3, 10):
+        print("Error: Python 3.10 or higher is required")
         print("Current Python version: " + sys.version)
         sys.exit(1)
     sys.exit(main())
