@@ -31,8 +31,8 @@ def main() -> int:
     if not os.path.exists(recordings_dir):
         try:
             os.mkdir(recordings_dir)
-        except Exception as e:
-            print(f"Failed to create recordings directory: {e}")
+        except Exception:
+            logger.exception("Failed to create recordings directory")
             return 1
 
     if args.version:
@@ -49,7 +49,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     if sys.version_info < (3, 10):
-        print("Error: Python 3.10 or higher is required")
-        print("Current Python version: " + sys.version)
+        logger.error("Python 3.10 or higher is required")
+        logger.error("Current Python version: " + sys.version)
         sys.exit(1)
     sys.exit(main())

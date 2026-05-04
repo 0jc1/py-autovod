@@ -97,10 +97,10 @@ def fetch_metadata(streamer_url: str) -> dict:
         )
         return json.loads(result.stdout)["metadata"]
     except subprocess.CalledProcessError as e:
-        print(f"Streamlink error: {e}")
+        logger.error(f"Streamlink error: {e}")
         return None
     except json.JSONDecodeError as e:
-        print(f"JSON decode error: {e}")
+        logger.error(f"JSON decode error: {e}")
         return None
 
 
@@ -124,8 +124,8 @@ def get_version_from_toml() -> str:
             data = tomllib.load(f)
 
         return data.get("project", {}).get("version", "0.0.0")
-    except Exception as e:
-        logger.error(f"Error getting version from {path}: {e}")
+    except Exception:
+        logger.exception(f"Error getting version from {path}")
     return "0.0.0"
 
 

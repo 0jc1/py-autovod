@@ -62,8 +62,8 @@ class Processor:
 
                 if new_video_path:
                     logger.debug(f"Video saved locally: {new_video_path}")
-            except Exception as e:
-                logger.error(f"Error encoding/saving video locally: {str(e)}")
+            except Exception:
+                logger.exception("Error encoding/saving video locally")
 
             # Process with clipception
             if CLIPCEPTION_ENABLED and streamer_config.getboolean(
@@ -79,8 +79,8 @@ class Processor:
                 try:
                     logger.info("Uploading video.")
                     upload_youtube(os.path.abspath(new_video_path))
-                except Exception as e:
-                    logger.error(f"Upload failed: {str(e)}")
+                except Exception:
+                    logger.exception("Upload failed")
 
             logger.info(f"Finished processing: {new_video_path}")
 
@@ -115,8 +115,8 @@ class Processor:
                 os.remove(mp4_path)
                 logger.info(f"Deleted .mp4 file: {mp4_path}")
 
-        except Exception as e:
-            logger.error(f"Error deleting video files: {str(e)}")
+        except Exception:
+            logger.exception("Error deleting video files")
 
     def _convert(self, input_path: str) -> str:
         """Converts a file to a new format using ffmpeg."""
@@ -196,8 +196,8 @@ class Processor:
             logger.success(f"Video saved locally: {output_path}")
             return output_path
 
-        except Exception as e:
-            logger.error(f"Error encoding/saving video locally: {str(e)}")
+        except Exception:
+            logger.exception("Error encoding/saving video locally")
             return None
 
     def _process_single_file(self, video_path, streamer_name, upload_video=False):
@@ -223,8 +223,8 @@ class Processor:
 
             try:
                 process_video(video_path)
-            except Exception as e:
-                logger.error(f"Error during transcription: {str(e)}")
+            except Exception:
+                logger.exception("Error during transcription")
                 return
 
             transcription_json = os.path.join(
@@ -248,8 +248,8 @@ class Processor:
                     num_clips=num_clips,
                     chunk_size=chunk_size,
                 )
-            except Exception as e:
-                logger.error(f"Error during clip generation: {str(e)}")
+            except Exception:
+                logger.exception("Error during clip generation")
                 return
 
             if not os.path.exists(output_file):
@@ -264,8 +264,8 @@ class Processor:
                 process_clips(
                     video_path, clips_output_dir, output_file, min_score=min_score
                 )
-            except Exception as e:
-                logger.error(f"Error during clip extraction: {str(e)}")
+            except Exception:
+                logger.exception("Error during clip extraction")
                 return
 
             logger.success("All processing completed successfully! Generated files:")
@@ -273,8 +273,8 @@ class Processor:
             logger.info(f"2. Clip selections: {output_file}")
             logger.info(f"3. Video clips: {clips_output_dir}/")
 
-        except Exception as e:
-            logger.error(f"Error processing video {video_path}: {str(e)}")
+        except Exception:
+            logger.exception(f"Error processing video {video_path}")
 
 
 processor = Processor()

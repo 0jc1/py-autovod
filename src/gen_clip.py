@@ -6,6 +6,7 @@ import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor
 from settings import config, API_KEY
 from utils import run_command
+from logger import logger
 
 model_name = config.get(
     "clipception.llm", "model_name", fallback="deepseek/deepseek-chat"
@@ -40,7 +41,7 @@ def process_chunk(chunk_data: tuple[list[dict], int]) -> list[dict]:
             return parsed_chunk
         return []
     except Exception as e:
-        print(f"Warning: Failed to process chunk {chunk_id}: {str(e)}")
+        logger.warning(f"Failed to process chunk {chunk_id}: {str(e)}")
         return []
 
 
@@ -102,7 +103,7 @@ def rank_clips_chunk(clips: list[dict]) -> str:
 
         except Exception as e:
             if attempt < max_retries - 1:
-                print(
+                logger.warning(
                     f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds..."
                 )
                 time.sleep(retry_delay)
@@ -139,7 +140,7 @@ def rank_all_clips_parallel(
                 all_ranked_clips.extend(result)
                 # pbar.update(1)
             except Exception as e:
-                print(f"Warning: Chunk processing failed: {str(e)}")
+                logger.warning(f"Chunk processing failed: {str(e)}")
 
     # pbar.close()
 
@@ -166,7 +167,7 @@ def parse_clip_data(input_string: str) -> list[dict]:
 
         return clips
     except (json.JSONDecodeError, ValueError) as e:
-        print(f"Error parsing clip data: {e}")
+        logger.error(f"Error parsing clip data: {e}")
         return []
 
 
@@ -202,10 +203,10 @@ def generate_clips(
 
         save_top_clips_json(ranked_clips, output_file, num_clips)
 
-        print(f"\nSuccessfully saved top {num_clips} clips to {output_file}")
-        print(f"Total processing time: {time.time() - start_time:.2f} seconds")
-    except Exception as e:
-        print(f"Error: {str(e)}")
+        logger.info(f"Successfully saved top {num_clips} clips to {output_file}")
+        logger.info(f"Total processing time: {time.time() - start_time:.2f} seconds")
+    except Exception:
+        logger.exception("Error generating clips")
 
 
 def extract_clip(input_file, output_dir, clip_data):
@@ -244,14 +245,14 @@ def extract_clip(input_file, output_dir, clip_data):
 
         # Check if ffmpeg succeeded
         if result.returncode == 0 and os.path.exists(output_file):
-            print(f"Clip extracted: {output_file}")
+            logger.info(f"Clip extracted: {output_file}")
             return True, output_file
         else:
-            print(f"FFmpeg failed with code {result.returncode}")
+            logger.error(f"FFmpeg failed with code {result.returncode}")
             return False, f"FFmpeg failed with code {result.returncode}"
 
     except Exception as e:
-        print("Error during clip extraction")
+        logger.exception("Error during clip extraction")
         return False, str(e)
 
 
@@ -264,7 +265,7 @@ def process_clips(input_file, output_dir, json_file, min_score=0):
     # Read and parse JSON data
     with open(json_file, "r") as f:
         data = json.load(f)
-        print(data)
+        logger.debug(f"Loaded clip selection payload: {data}")
 
     # Process each clip that meets the score threshold
     successful_clips = []
@@ -279,17 +280,17 @@ def process_clips(input_file, output_dir, json_file, min_score=0):
                 failed_clips.append((clip["name"], result))  # keyerror name
 
     # Print summary
-    print("\nExtraction Summary:")
-    print(f"Total clips processed: {len(successful_clips) + len(failed_clips)}")
-    print(f"Successfully extracted: {len(successful_clips)}")
-    print(f"Failed extractions: {len(failed_clips)}")
+    logger.info("Extraction Summary:")
+    logger.info(f"Total clips processed: {len(successful_clips) + len(failed_clips)}")
+    logger.info(f"Successfully extracted: {len(successful_clips)}")
+    logger.info(f"Failed extractions: {len(failed_clips)}")
 
     if successful_clips:
-        print("\nSuccessful clips:")
+        logger.info("Successful clips:")
         for name, path in successful_clips:
-            print(f"- {name}: {path}")
+            logger.info(f"- {name}: {path}")
 
     if failed_clips:
-        print("\nFailed clips:")
+        logger.warning("Failed clips:")
         for name, error in failed_clips:
-            print(f"- {name}: {error}")
+            logger.warning(f"- {name}: {error}")

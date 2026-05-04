@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 from utils import run_command
+from logger import logger
 
 YOUTUBE_UPLOADER_LINUX = "/root/youtubeuploader/youtubeuploader"
 YOUTUBE_UPLOADER_WINDOWS = "C:\\youtubeuploader\\youtubeuploader.exe"
@@ -28,7 +29,9 @@ def upload_youtube(filename: str) -> None:
 
     command = [uploader_path, "-filename", filename]
     result = run_command(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    print(result.stdout.decode())
+    stdout = result.stdout.decode().strip()
+    if stdout:
+        logger.info(stdout)
 
     if result.returncode != 0:
         raise RuntimeError("youtubeuploader failed to upload the file")
