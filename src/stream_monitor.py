@@ -74,8 +74,8 @@ class StreamMonitor(threading.Thread):
         except subprocess.TimeoutExpired:
             logger.error("yt-dlp timed out while getting stream URL")
             return None
-        except Exception as e:
-            logger.error(f"Error running yt-dlp: {e}")
+        except Exception:
+            logger.exception("Error running yt-dlp")
             return None
 
     def download_video(self) -> tuple[bool, str]:
@@ -130,8 +130,8 @@ class StreamMonitor(threading.Thread):
             else:
                 return False, ""
 
-        except Exception as e:
-            logger.error(f"Error running streamlink: {e}")
+        except Exception:
+            logger.exception("Error running streamlink")
             return False, ""
         finally:
             self.current_process = None
@@ -173,8 +173,8 @@ class StreamMonitor(threading.Thread):
                     logger.info(
                         f"{self.streamer_name} is offline. Retrying in {self.retry_delay} seconds.."
                     )
-            except Exception as e:
-                logger.error(f"Error monitoring {self.streamer_name}: {e}")
+            except Exception:
+                logger.exception(f"Error monitoring {self.streamer_name}")
 
             time.sleep(self.retry_delay)
 

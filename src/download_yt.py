@@ -9,13 +9,14 @@ Usage: python download_yt.py [YouTube URL]
 import sys
 import os
 import argparse
+from logger import logger
 
 # Import yt-dlp here to avoid import error if not installed
 try:
     import yt_dlp
 except ImportError:
-    print("Error: yt-dlp is not installed.")
-    print("Please install it using: pip install yt-dlp")
+    logger.error("yt-dlp is not installed.")
+    logger.info("Please install it using: pip install yt-dlp")
 
 # ffmpeg -i input.mp4 -vf "scale=1080:1920:force_original_aspect_ratio=increase,blur=20[bg];[bg][0:v]scale=1080:1920:force_original_aspect_ratio=decrease[scaled];[scaled]pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black@0,setsar=1" -c:a copy output.mp4
 
@@ -64,14 +65,14 @@ def download_video(url, output_dir, format_option):
 
         # Download the video
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            print(f"Downloading video from: {url}")
+            logger.info(f"Downloading video from: {url}")
             ydl.download([url])
 
-        print(f"Video downloaded successfully to {output_dir}")
+        logger.info(f"Video downloaded successfully to {output_dir}")
         return True
 
-    except Exception as e:
-        print(f"Error downloading video: {e}")
+    except Exception:
+        logger.exception("Error downloading video")
         return False
 
 
@@ -79,7 +80,7 @@ def main():
     args = parse_arguments()
 
     if not args.url.startswith(("http://", "https://")):
-        print("Error: Please provide a valid URL starting with http:// or https://")
+        logger.error("Please provide a valid URL starting with http:// or https://")
         sys.exit(1)
 
     # Download the yt video

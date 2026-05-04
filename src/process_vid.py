@@ -2,6 +2,7 @@
 import os
 import sys
 import argparse
+from logger import logger
 from processor import processor
 
 
@@ -21,13 +22,13 @@ def main():
     if args.video_path:
         video_path = args.video_path
     else:
-        print("Error: No video path provided")
+        logger.error("No video path provided")
         parser.print_help()
         sys.exit(1)
 
     # Check if the video file exists
     if not os.path.exists(video_path):
-        print(f"Error: Video file {video_path} not found")
+        logger.error(f"Video file {video_path} not found")
         sys.exit(1)
 
     # Use the processor's existing method to process the video

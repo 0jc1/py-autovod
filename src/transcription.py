@@ -1,10 +1,11 @@
 import sys
+from logger import logger
 
 try:
     import torch
 except ImportError:
-    print("ERROR: PyTorch is required. Please install with:")
-    print("pip install torch torchaudio")
+    logger.error("PyTorch is required. Please install with:")
+    logger.error("pip install torch torchaudio")
     sys.exit(1)
 
 # Standard imports
@@ -25,13 +26,13 @@ if transcription_engine == "faster-whisper":
     try:
         from faster_whisper import WhisperModel
     except ImportError:
-        print("ERROR: faster-whisper is not installed.")
+        logger.error("faster-whisper is not installed.")
         sys.exit(1)
 else:
     try:
         import whisper
     except ImportError:
-        print("ERROR: Whisper is not installed.")
+        logger.error("Whisper is not installed.")
         sys.exit(1)
 
 # Global list for cleanup
@@ -58,7 +59,7 @@ def check_cuda():
             torch.cuda.empty_cache()
             return True
         except Exception as e:
-            print(f"CUDA available but failed to initialize: {str(e)}")
+            logger.warning(f"CUDA available but failed to initialize: {str(e)}")
             return False
     return False
 
@@ -108,7 +109,7 @@ def extract_audio(video_path):
     video_file = Path(video_path)
     audio_path = video_file.with_suffix(".wav")
 
-    print(f"Extracting audio to {audio_path}...")
+    logger.info(f"Extracting audio to {audio_path}...")
 
     subprocess.run(
         [
@@ -182,7 +183,7 @@ def combine_segments(segments):
 
 def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DURATION):
     """Get transcription with timestamps and audio features"""
-    print("Generating enhanced transcription...")
+    logger.info("Generating enhanced transcription...")
     enhanced_segments = []
 
     audio = AudioSegment.from_wav(str(audio_path))
@@ -238,7 +239,7 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
             enhanced_segments.append(combined_segment)
 
     transcribe_end = time.time()
-    print(
+    logger.info(
         f"Enhanced transcription processing took: {format_time(transcribe_end - transcribe_start)}"
     )
 
@@ -259,7 +260,7 @@ def process_video(video_path):
         audio_path = extract_audio(video_path)
 
         # Model loading
-        print(f"Loading {transcription_engine} {model_size} model for {device}...")
+        logger.info(f"Loading {transcription_engine} {model_size} model for {device}...")
         if transcription_engine == "faster-whisper":
             model = WhisperModel(
                 model_size,
@@ -269,13 +270,15 @@ def process_video(video_path):
         else:
             model = whisper.load_model(model_size, device=device)
             # Verify model device
-            print(f"Model is on device: {next(model.parameters()).device}")
+            logger.info(f"Model is on device: {next(model.parameters()).device}")
 
         if device == "cuda":
-            print(
+            logger.info(
                 f"GPU Memory allocated: {torch.cuda.memory_allocated()/1024**2:.2f} MB"
             )
-            print(f"GPU Memory reserved: {torch.cuda.memory_reserved()/1024**2:.2f} MB")
+            logger.info(
+                f"GPU Memory reserved: {torch.cuda.memory_reserved()/1024**2:.2f} MB"
+            )
 
         # Transcription
         enhanced_transcription = transcribe_with_features(model, audio_path, device)
@@ -285,15 +288,15 @@ def process_video(video_path):
             json.dump(enhanced_transcription, f, indent=2, ensure_ascii=False)
 
         process_end = time.time()
-        print(f"\n{'='*40}")
-        print(f"Total processing time: {format_time(process_end - process_start)}")
-        print(f"Enhanced transcription saved to {transcription_path}")
-        print(f"{'='*40}")
+        logger.info(f"\n{'='*40}")
+        logger.info(f"Total processing time: {format_time(process_end - process_start)}")
+        logger.info(f"Enhanced transcription saved to {transcription_path}")
+        logger.info(f"{'='*40}")
 
-    except Exception as e:
-        print(f"\n{'!'*40}")
-        print(f"Error processing video: {str(e)}")
-        print(f"{'!'*40}")
+    except Exception:
+        logger.error(f"\n{'!'*40}")
+        logger.exception("Error processing video")
+        logger.error(f"{'!'*40}")
         raise
     finally:
         # Cleanup operations
