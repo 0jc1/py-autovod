@@ -1,7 +1,7 @@
 import os
 import sys
 import tempfile
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 # Add src to path to import utils
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -142,3 +142,58 @@ class TestLoadConfig:
         config = load_config("default")
         if config is not None:
             assert isinstance(config, configparser.ConfigParser)
+
+class TestRunCommand:
+    """Tests for the run_command utility function"""
+
+    @patch("utils.subprocess.Popen")
+    def test_run_command_success(self, mock_popen):
+        """Test that run_command captures stdout on success"""
+        from utils import run_command
+
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"hello world", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        result = run_command(["echo", "hello"])
+
+        assert result.returncode == 0
+        assert result.stdout == "hello world"
+        assert result.stderr == ""
+
+    @patch("utils.subprocess.Popen")
+    def test_run_command_error(self, mock_popen):
+        """Test that run_command captures stderr on failure"""
+        from utils import run_command
+
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"error occurred")
+        process_mock.returncode = 1
+        mock_popen.return_value = process_mock
+
+        result = run_command(["bad", "cmd"])
+
+        assert result.returncode == 1
+        assert result.stdout == ""
+        assert result.stderr == "error occurred"
+
+    @patch("utils.subprocess.Popen")
+    def test_run_command_calls_popen_correctly(self, mock_popen):
+        """Ensure subprocess.Popen is called with the correct arguments"""
+        from utils import run_command
+
+        process_mock = MagicMock()
+        process_mock.communicate.return_value = (b"", b"")
+        process_mock.returncode = 0
+        mock_popen.return_value = process_mock
+
+        cmd = ["ffmpeg", "-i", "input.mp4"]
+        run_command(cmd)
+
+        mock_popen.assert_called_once()
+        called_args, called_kwargs = mock_popen.call_args
+
+        assert called_args[0] == cmd
+        assert "stdout" in called_kwargs
+        assert "stderr" in called_kwargs
