@@ -15,11 +15,7 @@ class TestUploaderCommands:
     def test_rclone_upload_success(self, mock_run):
         """Test that upload_with_rclone builds the correct command and succeeds"""
 
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="uploaded",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="uploaded", stderr="")
 
         local = "recordings/test.mp4"
         remote = "myremote:uploads/test.mp4"
@@ -30,12 +26,7 @@ class TestUploaderCommands:
         mock_run.assert_called_once()
         called_args = mock_run.call_args[0][0]
 
-        assert called_args == [
-            "rclone",
-            "copyto",
-            local,
-            remote
-        ]
+        assert called_args == ["rclone", "copyto", local, remote]
 
         # Ensure result is passed through
         assert result.returncode == 0
@@ -46,9 +37,7 @@ class TestUploaderCommands:
         """Test that upload_with_rclone handles errors"""
 
         mock_run.return_value = MagicMock(
-            returncode=1,
-            stdout="",
-            stderr="upload failed"
+            returncode=1, stdout="", stderr="upload failed"
         )
 
         local = "recordings/test.mp4"

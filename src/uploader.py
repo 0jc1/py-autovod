@@ -27,7 +27,7 @@ def upload_youtube(filename: str) -> None:
             raise FileNotFoundError(
                 f"YouTube uploader not found in either {uploader_path} or {cwd_uploader}"
             )
-        
+
     command = [uploader_path, "-filename", filename]
     result = run_command(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout = result.stdout.decode().strip()
@@ -36,7 +36,7 @@ def upload_youtube(filename: str) -> None:
 
     if result.returncode != 0:
         raise RuntimeError("youtubeuploader failed to upload the file")
-    
+
 
 def upload_rclone(filename: str, config: ConfigParser) -> None:
     remote = config.get("rclone", "remote")
@@ -56,11 +56,7 @@ def upload_rclone(filename: str, config: ConfigParser) -> None:
     logger.info(f"Running rclone command: {' '.join(command)}")
 
     # Run rclone and stream stderr to the logger
-    process = subprocess.Popen(
-        command,
-        stderr=subprocess.PIPE,
-        text=True
-    )
+    process = subprocess.Popen(command, stderr=subprocess.PIPE, text=True)
 
     if process.stderr:
         for line in process.stderr:
@@ -85,5 +81,3 @@ def upload_rclone(filename: str, config: ConfigParser) -> None:
             logger.info(f"Local file deleted after successful upload: {filename}")
         except Exception as e:
             logger.error(f"Could not delete local file: {e}")
-
-

@@ -7,7 +7,6 @@ from utils import run_command
 from uploader import upload_youtube
 from uploader_commands import upload_with_rclone
 
-
 # clipception
 from transcription import process_video, MIN_DURATION
 from gen_clip import generate_clips, process_clips
@@ -81,15 +80,17 @@ class Processor:
                 try:
                     logger.info("Uploading video.")
                     service = streamer_config.get("upload", "service")
-                    
+
                     if service == "youtube":
                         upload_youtube(os.path.abspath(new_video_path))
                     elif service == "rclone":
-                        upload_with_rclone(os.path.abspath(new_video_path), streamer_config)
+                        upload_with_rclone(
+                            os.path.abspath(new_video_path), streamer_config
+                        )
                     else:
                         logger.error(f"Unknown upload service: {service}")
                         raise ValueError(f"Unknown upload service: {service}")
-                        
+
                 except Exception:
                     logger.exception("Upload failed")
 
@@ -160,10 +161,14 @@ class Processor:
                 "-vf",
                 "scale=1080:1920:force_original_aspect_ratio=decrease,"
                 "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1",
-                "-c:v", "libx264",  
-                "-preset", "fast",
-                "-crf", "18",
-                "-c:a", "copy",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "fast",
+                "-crf",
+                "18",
+                "-c:a",
+                "copy",
                 shorts_output_path,
                 "-loglevel",
                 "error",

@@ -260,7 +260,9 @@ def process_video(video_path):
         audio_path = extract_audio(video_path)
 
         # Model loading
-        logger.info(f"Loading {transcription_engine} {model_size} model for {device}...")
+        logger.info(
+            f"Loading {transcription_engine} {model_size} model for {device}..."
+        )
         if transcription_engine == "faster-whisper":
             model = WhisperModel(
                 model_size,
@@ -289,7 +291,9 @@ def process_video(video_path):
 
         process_end = time.time()
         logger.info(f"\n{'='*40}")
-        logger.info(f"Total processing time: {format_time(process_end - process_start)}")
+        logger.info(
+            f"Total processing time: {format_time(process_end - process_start)}"
+        )
         logger.info(f"Enhanced transcription saved to {transcription_path}")
         logger.info(f"{'='*40}")
 

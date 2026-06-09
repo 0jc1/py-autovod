@@ -29,10 +29,13 @@ class TestProcessorCommands:
         assert first_call == [
             "ffmpeg",
             "-y",
-            "-i", input_path,
-            "-c", "copy",
+            "-i",
+            input_path,
+            "-c",
+            "copy",
             expected_output,
-            "-loglevel", "error",
+            "-loglevel",
+            "error",
         ]
 
         assert result == expected_output
@@ -65,12 +68,18 @@ class TestProcessorCommands:
 
         assert cmd == [
             "ffmpeg",
-            "-i", input_path,
-            "-c:v", "libx265",
-            "-crf", "25",
-            "-preset", "medium",
-            "-c:a", "copy",
-            "-loglevel", "error",
+            "-i",
+            input_path,
+            "-c:v",
+            "libx265",
+            "-crf",
+            "25",
+            "-preset",
+            "medium",
+            "-c:a",
+            "copy",
+            "-loglevel",
+            "error",
             expected_output,
         ]
 

@@ -143,6 +143,7 @@ class TestLoadConfig:
         if config is not None:
             assert isinstance(config, configparser.ConfigParser)
 
+
 class TestRunCommand:
     """Tests for the run_command utility function"""
 

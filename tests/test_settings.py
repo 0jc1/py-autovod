@@ -16,6 +16,7 @@ class TestSettings:
         """Test that settings module imports without errors"""
         try:
             import settings
+
             assert True
         except ImportError as e:
             pytest.fail(f"Failed to import settings: {e}")
@@ -24,6 +25,7 @@ class TestSettings:
     def test_api_key_from_env(self):
         """Test that API key is loaded from environment"""
         import settings
+
         importlib.reload(settings)  # ensure env var is read fresh
         assert settings.API_KEY == "test_key"
 
@@ -31,6 +33,7 @@ class TestSettings:
     def test_api_key_missing(self):
         """Test behavior when API key is missing"""
         import settings
+
         importlib.reload(settings)
         assert settings.API_KEY is None
 
@@ -46,4 +49,5 @@ class TestSettings:
     def test_clipception_enabled_flag(self, project_root):
         """Test that CLIPCEPTION_ENABLED is computed correctly"""
         import settings
+
         assert isinstance(settings.CLIPCEPTION_ENABLED, bool)
