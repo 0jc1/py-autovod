@@ -28,6 +28,20 @@ class StreamPlatform(Enum):
         return None
 
 
+def run_command(cmd: list[str]) -> subprocess.CompletedProcess:
+    if not cmd:
+        logger.warning("Command list is empty")
+        return subprocess.CompletedProcess([], -1)
+
+    logger.debug(f"Executing: {' '.join(cmd)}")
+    try:
+        return subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        logger.debug(f"Command failed with error: {e}")
+        return subprocess.CompletedProcess(cmd, -1)
+
+
+""" Replaced the code below to prevent hang on windows
 def run_command(
     cmd: list[str],
     stdout: int | None = subprocess.DEVNULL,
@@ -43,6 +57,7 @@ def run_command(
     except subprocess.CalledProcessError as e:
         logger.debug(f"Command failed with error: {e}")
         return subprocess.CompletedProcess(cmd, -1)
+"""
 
 
 def is_docker() -> bool:
