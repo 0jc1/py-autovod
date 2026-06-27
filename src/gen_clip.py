@@ -209,7 +209,31 @@ def generate_clips(
         logger.exception("Error generating clips")
 
 
-def extract_clip(input_file, output_dir, clip_data):
+def _shorts_output_path(output_file):
+    base_path, _ = os.path.splitext(output_file)
+    return f"{base_path}_shorts.mp4"
+
+
+def _convert_clip_to_shorts(input_file):
+    output_file = _shorts_output_path(input_file)
+    cmd = [
+        "ffmpeg",
+        "-y",
+        "-i",
+        input_file,
+        "-vf",
+        "scale=1080:1920:force_original_aspect_ratio=decrease,"
+        "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1",
+        "-c:v",
+        "libx264",
+        "-c:a",
+        "aac",
+        output_file,
+    ]
+    return run_command(cmd), output_file
+
+
+def extract_clip(input_file, output_dir, clip_data, shorts_format=False):
     """Extract a single clip using ffmpeg ."""
     try:
         # Sanitize clip name for filename
@@ -246,6 +270,14 @@ def extract_clip(input_file, output_dir, clip_data):
         # Check if ffmpeg succeeded
         if result.returncode == 0 and os.path.exists(output_file):
             logger.info(f"Clip extracted: {output_file}")
+            if shorts_format:
+                shorts_result, shorts_output = _convert_clip_to_shorts(output_file)
+                if shorts_result.returncode == 0 and os.path.exists(shorts_output):
+                    logger.info(f"Shorts clip extracted: {shorts_output}")
+                else:
+                    logger.error(
+                        f"Shorts conversion failed with code {shorts_result.returncode}"
+                    )
             return True, output_file
         else:
             logger.error(f"FFmpeg failed with code {result.returncode}")
@@ -256,7 +288,7 @@ def extract_clip(input_file, output_dir, clip_data):
         return False, str(e)
 
 
-def process_clips(input_file, output_dir, json_file, min_score=0):
+def process_clips(input_file, output_dir, json_file, min_score=0, shorts_format=False):
     """Process all clips from the JSON file that meet the minimum score requirement"""
 
     # Create output directory if it doesn't exist
@@ -273,7 +305,9 @@ def process_clips(input_file, output_dir, json_file, min_score=0):
 
     for clip in data["top_clips"]:
         if clip["score"] >= min_score:
-            success, result = extract_clip(input_file, output_dir, clip)
+            success, result = extract_clip(
+                input_file, output_dir, clip, shorts_format=shorts_format
+            )
             if success:
                 successful_clips.append((clip["name"], result))
             else:

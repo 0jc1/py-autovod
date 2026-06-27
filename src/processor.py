@@ -7,7 +7,7 @@ from utils import run_command
 from uploader import upload_youtube
 
 # clipception
-from transcription import process_video, MIN_DURATION
+from transcription import process_video
 from gen_clip import generate_clips, process_clips
 
 
@@ -135,26 +135,6 @@ class Processor:
         ]
         run_command(command)
 
-        # Shorts video format
-        if MIN_DURATION < 130:
-            output_dir = os.path.dirname(output_path)
-            shorts_filename = f"shorts_{os.path.basename(output_path)}"
-            shorts_output_path = os.path.join(output_dir, shorts_filename)
-            command = [
-                "ffmpeg",
-                "-i",
-                output_path,
-                "-vf",
-                "scale=1080:1920:force_original_aspect_ratio=decrease,"
-                "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1",
-                "-c",
-                "copy",
-                shorts_output_path,
-                "-loglevel",
-                "error",
-            ]
-            run_command(command)
-
         return output_path
 
     def _encode(self, video_path, streamer_config):
@@ -204,6 +184,9 @@ class Processor:
         """Process a video file with clipception to generate clips."""
         try:
             num_clips = config.getint("clipception", "num_clips", fallback=10)
+            shorts_format = config.getboolean(
+                "clipception", "shorts_format", fallback=False
+            )
             min_score = 0  # Default minimum score threshold
             chunk_size = 10
 
@@ -262,7 +245,11 @@ class Processor:
 
             try:
                 process_clips(
-                    video_path, clips_output_dir, output_file, min_score=min_score
+                    video_path,
+                    clips_output_dir,
+                    output_file,
+                    min_score=min_score,
+                    shorts_format=shorts_format,
                 )
             except Exception:
                 logger.exception("Error during clip extraction")
