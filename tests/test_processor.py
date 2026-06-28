@@ -4,9 +4,6 @@ import subprocess
 import sys
 import types
 from pathlib import Path
-import os
-import sys
-import types
 from unittest.mock import patch
 
 # Add src to path to import processor
@@ -27,7 +24,7 @@ uploader = types.ModuleType("uploader")
 uploader.upload_youtube = lambda *args, **kwargs: None
 sys.modules.setdefault("uploader", uploader)
 
-from processor import Processor
+from processor import Processor  # noqa: E402
 
 
 def test_encode_writes_to_reencoded_output_path():
@@ -79,26 +76,44 @@ def test_encode_preserves_extensionless_input_names():
     assert output_path == "recording.reencoded"
 
 
-def test_convert_builds_valid_shorts_ffmpeg_command():
+def test_convert_does_not_build_shorts_from_full_vod():
     processor = object.__new__(Processor)
 
-    with (
-        patch("processor.MIN_DURATION", 60),
-        patch("processor.run_command") as run_command,
-    ):
+    with patch("processor.run_command") as run_command:
         output_path = processor._convert("/tmp/recordings/input.ts")
 
     assert output_path == "/tmp/recordings/input.mp4"
-    assert run_command.call_args_list[1].args[0] == [
-        "ffmpeg",
-        "-i",
+    run_command.assert_called_once_with(
+        [
+            "ffmpeg",
+            "-i",
+            "/tmp/recordings/input.ts",
+            "-c",
+            "copy",
+            "/tmp/recordings/input.mp4",
+            "-loglevel",
+            "error",
+        ]
+    )
+
+
+def test_process_single_file_passes_shorts_format_to_clips():
+    processor = object.__new__(Processor)
+
+    with (
+        patch("processor.os.path.exists", return_value=True),
+        patch("processor.process_video"),
+        patch("processor.generate_clips"),
+        patch("processor.process_clips") as process_clips,
+        patch("processor.config.getint", return_value=10),
+        patch("processor.config.getboolean", return_value=True),
+    ):
+        processor._process_single_file("/tmp/recordings/input.mp4", "streamer")
+
+    process_clips.assert_called_once_with(
         "/tmp/recordings/input.mp4",
-        "-vf",
-        "scale=1080:1920:force_original_aspect_ratio=decrease,"
-        "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1",
-        "-c",
-        "copy",
-        "/tmp/recordings/shorts_input.mp4",
-        "-loglevel",
-        "error",
-    ]
+        "/tmp/recordings/clips",
+        "/tmp/recordings/top_clips_one.json",
+        min_score=0,
+        shorts_format=True,
+    )
