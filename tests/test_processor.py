@@ -6,6 +6,8 @@ import types
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 # Add src to path to import processor
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
@@ -117,3 +119,77 @@ def test_process_single_file_passes_shorts_format_to_clips():
         min_score=0,
         shorts_format=True,
     )
+
+
+@pytest.mark.parametrize(
+    ("input_path", "expected_output"),
+    [
+        ("recording.ts", "recording.mp4"),
+        ("/tmp/archive.name.mkv", "/tmp/archive.name.mp4"),
+        ("/tmp/extensionless", "/tmp/extensionless.mp4"),
+    ],
+)
+def test_convert_builds_output_path_from_input_name(input_path, expected_output):
+    processor = object.__new__(Processor)
+
+    with patch("processor.run_command") as run_command:
+        output_path = processor._convert(input_path)
+
+    assert output_path == expected_output
+    assert run_command.call_args.args[0][-3:] == [expected_output, "-loglevel", "error"]
+
+
+def test_encode_uses_default_options():
+    streamer_config = configparser.ConfigParser()
+    streamer_config["encoding"] = {}
+    completed = subprocess.CompletedProcess(args=[], returncode=0)
+
+    with patch("processor.run_command", return_value=completed) as run_command:
+        output_path = Processor._encode(
+            object.__new__(Processor), "/tmp/input.mp4", streamer_config
+        )
+
+    assert output_path == "/tmp/input.reencoded.mp4"
+    assert run_command.call_args.args[0] == [
+        "ffmpeg",
+        "-i",
+        "/tmp/input.mp4",
+        "-c:v",
+        "libx265",
+        "-crf",
+        "25",
+        "-preset",
+        "medium",
+        "-c:a",
+        "copy",
+        "-loglevel",
+        "error",
+        "/tmp/input.reencoded.mp4",
+    ]
+
+
+def test_encode_returns_none_when_ffmpeg_fails():
+    streamer_config = configparser.ConfigParser()
+    streamer_config["encoding"] = {}
+    completed = subprocess.CompletedProcess(
+        args=[], returncode=1, stderr="encoding failed"
+    )
+
+    with patch("processor.run_command", return_value=completed):
+        output_path = Processor._encode(
+            object.__new__(Processor), "/tmp/input.mp4", streamer_config
+        )
+
+    assert output_path is None
+
+
+def test_encode_returns_none_when_command_raises():
+    streamer_config = configparser.ConfigParser()
+    streamer_config["encoding"] = {}
+
+    with patch("processor.run_command", side_effect=OSError("ffmpeg missing")):
+        output_path = Processor._encode(
+            object.__new__(Processor), "/tmp/input.mp4", streamer_config
+        )
+
+    assert output_path is None
