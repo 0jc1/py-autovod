@@ -4,6 +4,7 @@ import signal
 from logger import logger
 from settings import config
 from stream_monitor import StreamMonitor
+from uploader import uploader
 from utils import get_size
 from tqdm import tqdm
 
@@ -83,6 +84,12 @@ class StreamManager:
 
         self.monitors.clear()
         self.running = False
+
+        # Persist any remaining uploads and stop the background worker.
+        try:
+            uploader.stop()
+        except Exception:
+            logger.exception("Error stopping uploader")
 
     def list_monitored_streamers(self) -> list[str]:
         return list(self.monitors.keys())
