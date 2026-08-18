@@ -7,6 +7,10 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+# Other tests install a lightweight uploader stub in sys.modules. Drop it so we
+# load the real module under test (ModuleType stubs have no __file__/Uploader).
+sys.modules.pop("uploader", None)
+
 import uploader as uploader_mod  # noqa: E402
 from uploader import Uploader  # noqa: E402
 
