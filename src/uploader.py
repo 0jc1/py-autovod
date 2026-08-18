@@ -190,8 +190,7 @@ class Uploader:
                 ),
             )
             opts.setdefault(
-                "rclone_remote",
-                streamer_config.get("rclone", "remote", fallback=""),
+                "rclone_remote", streamer_config.get("rclone", "remote", fallback="")
             )
             opts.setdefault(
                 "rclone_directory",
@@ -361,7 +360,9 @@ class Uploader:
                 self.queue.put(item)
                 restored += 1
             if restored:
-                logger.info(f"Restored {restored} pending upload(s) from {self.queue_path}")
+                logger.info(
+                    f"Restored {restored} pending upload(s) from {self.queue_path}"
+                )
         except Exception:
             logger.exception(f"Failed to load upload queue from {self.queue_path}")
 

@@ -31,10 +31,7 @@ def reset_uploader_singleton(tmp_path):
 
 
 def _streamer_config(
-    service="youtube",
-    save_on_fail=False,
-    save_locally=True,
-    max_attempts=5,
+    service="youtube", save_on_fail=False, save_locally=True, max_attempts=5
 ):
     cfg = configparser.ConfigParser()
     cfg["upload"] = {
@@ -82,7 +79,9 @@ def test_retry_after_transient_failure_then_success(tmp_path, reset_uploader_sin
     assert video.exists()
 
 
-def test_save_on_fail_keeps_file_after_exhausted_retries(tmp_path, reset_uploader_singleton):
+def test_save_on_fail_keeps_file_after_exhausted_retries(
+    tmp_path, reset_uploader_singleton
+):
     video = tmp_path / "vod.mp4"
     video.write_bytes(b"data")
 
@@ -109,7 +108,9 @@ def test_save_on_fail_keeps_file_after_exhausted_retries(tmp_path, reset_uploade
     assert video.exists()
 
 
-def test_delete_after_success_when_not_saving_locally(tmp_path, reset_uploader_singleton):
+def test_delete_after_success_when_not_saving_locally(
+    tmp_path, reset_uploader_singleton
+):
     video = tmp_path / "vod.mp4"
     video.write_bytes(b"data")
     ts = tmp_path / "vod.ts"
