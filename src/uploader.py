@@ -4,7 +4,6 @@ import platform
 import queue
 import subprocess
 import threading
-import time
 from typing import Any
 
 from logger import logger
