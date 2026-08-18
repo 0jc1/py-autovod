@@ -8,14 +8,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from stream_monitor import StreamMonitor
 
+
 class TestStreamMonitorQuality:
     def _make_monitor(self, quality: str) -> StreamMonitor:
         monitor = StreamMonitor.__new__(StreamMonitor)
         config = configparser.ConfigParser()
-        config.read_dict({
-            "streamlink": {"quality": quality},
-            "source": {"stream_source": "twitch"},
-        })
+        config.read_dict(
+            {"streamlink": {"quality": quality}, "source": {"stream_source": "twitch"}}
+        )
         monitor.config = config
         monitor.streamer_name = "teststreamer"
         monitor.datetime_format = "%d-%m-%Y-%H-%M-%S"
