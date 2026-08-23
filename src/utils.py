@@ -1,6 +1,8 @@
 import os
+import requests
 import sys
 import subprocess
+from bs4 import BeautifulSoup
 from enum import Enum
 from logger import logger
 from pathlib import Path
@@ -66,7 +68,77 @@ def determine_source(stream_source: StreamPlatform, streamer_name: str) -> str |
     return sources.get(stream_source)
 
 
+def is_twitch_channel_live(url: str) -> bool:
+    # Last-minute import to avoid circular imports
+    from settings import TWITCH_API_OAUTH_TOKEN, TWITCH_APP_CLIENT_ID
+
+    if TWITCH_API_OAUTH_TOKEN and TWITCH_APP_CLIENT_ID:
+        # Prepare headers and query
+        streamer_login = url.split("/")[-1]
+        payload = {"user_login": streamer_login}
+        headers = {
+            "Authorization": "Bearer " + TWITCH_API_OAUTH_TOKEN,
+            "Client-Id": TWITCH_APP_CLIENT_ID,
+        }
+        # Make call to "streams"-endpoint
+        # https://dev.twitch.tv/docs/api/reference#get-streams
+        r = requests.get(
+            "https://api.twitch.tv/helix/streams", params=payload, headers=headers
+        )
+        try:
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if r.status_code == 401:
+                raise requests.exceptions.HTTPError(
+                    "Invalid or expired Twitch API OAuth token."
+                ) from e
+            raise
+
+        # If the data shows any streams present (since we're querying
+        # for only one streamer), that streamer is necessarily live
+        body: dict = r.json()
+        return bool(body["data"])
+
+    else:
+        # If no auth see GraphQL useLive
+        return False
+
+
+def is_youtube_channel_live(url: str) -> bool:
+    r = requests.get(url)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.text, "html.parser")
+    live_indicator = "/watch?v="
+    link_element = soup.find("link", rel="canonical")
+
+    # Confirm whether body contains `<link ... href=".../watch?v=...">`
+    return link_element and (live_indicator in link_element["href"])
+
+
 def check_stream_live(url: str) -> bool:
+    """
+    Check if given stream is live
+
+    Uses different methods for each service, and streamlink as a fallback.
+    """
+    # TODO: proper from-url-to-platform
+    url = "https://" + url
+    s = "youtube" if "youtube" in url else "twitch"
+    platform = StreamPlatform.from_string(s)
+
+    if platform == StreamPlatform.TWITCH:
+        return is_twitch_channel_live(url)
+
+    elif platform == StreamPlatform.KICK:
+        pass
+    elif platform == StreamPlatform.YOUTUBE:
+        return is_youtube_channel_live(url)
+
+    elif platform == StreamPlatform.RUMBLE:
+        pass
+    elif platform == StreamPlatform.DLIVE:
+        pass
+
     # TODO this takes many seconds, find a faster method
     result = run_command(["streamlink", url])
     return result.returncode == 0

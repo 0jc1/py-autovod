@@ -63,6 +63,7 @@ test = [
     "pytest",
     "loguru",
     "dotenv",
+    "responses",
 ]
 
 [project.urls]
