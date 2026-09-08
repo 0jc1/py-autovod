@@ -4,7 +4,7 @@ import os
 from logger import logger
 from settings import config, CLIPCEPTION_ENABLED
 from utils import run_command
-from uploader import upload_youtube
+from uploader import uploader
 
 # clipception
 from transcription import process_video
@@ -73,27 +73,29 @@ class Processor:
                     new_video_path, streamer_name, upload_video=False
                 )
 
-            # Upload
+            # Queue upload on the background uploader so processing is not blocked.
             upload = streamer_config.getboolean("upload", "upload")
-            if upload:
-                try:
-                    logger.info("Uploading video.")
-                    upload_youtube(os.path.abspath(new_video_path))
-                except Exception:
-                    logger.exception("Upload failed")
+            if upload and new_video_path:
+                service = streamer_config.get("upload", "service", fallback="youtube")
+                logger.info(f"Enqueueing upload via {service}: {new_video_path}")
+                uploader.enqueue(
+                    filename=os.path.abspath(new_video_path),
+                    service=service,
+                    streamer_config=streamer_config,
+                    ts_path=os.path.abspath(video_path) if video_path else None,
+                )
+            else:
+                # No upload: honor save_locally here. Upload path cleans up later.
+                save_locally = streamer_config.getboolean(
+                    "local", "save_locally", fallback=True
+                )
+                if not save_locally:
+                    logger.info(
+                        "Deleting video files (save_locally is disabled, upload off)"
+                    )
+                    self._delete_video_files(video_path, new_video_path)
 
             logger.info(f"Finished processing: {new_video_path}")
-
-            # Delete files after upload if not set to save locally
-            save_locally = streamer_config.getboolean(
-                "local", "save_locally", fallback=True
-            )
-
-            if not save_locally:
-                logger.info(
-                    "Deleting video files after upload (save_locally is disabled)"
-                )
-                self._delete_video_files(video_path, new_video_path)
 
             self.queue.task_done()
             self.processing_event.clear()

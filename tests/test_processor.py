@@ -24,6 +24,17 @@ sys.modules.setdefault("gen_clip", gen_clip)
 
 uploader = types.ModuleType("uploader")
 uploader.upload_youtube = lambda *args, **kwargs: None
+
+
+class _FakeUploader:
+    def __init__(self):
+        self.items = []
+
+    def enqueue(self, *args, **kwargs):
+        self.items.append((args, kwargs))
+
+
+uploader.uploader = _FakeUploader()
 sys.modules.setdefault("uploader", uploader)
 
 from processor import Processor  # noqa: E402
