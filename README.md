@@ -85,6 +85,17 @@ ffmpeg -i input.mp4 -i music.mp3 -filter_complex "[0:v]scale=1080:1920:force_ori
 
 Audio transcription is done with OpenAI's Whisper ASR. This feature can be configured in `config.ini`
 
+When using the `faster-whisper` engine, you can enable **batched inference** for significantly faster GPU transcription (requires faster-whisper 1.1+):
+
+```ini
+[clipception.transcription]
+engine = faster-whisper
+batched = true
+batch_size = 8
+```
+
+Increase `batch_size` to trade GPU memory for more throughput.
+
 ## Contribution
 
 Contributors are welcome! Please feel free to submit a PR or issue.
