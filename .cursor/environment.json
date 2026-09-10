@@ -1,0 +1,4 @@
+{
+  "name": "py-autovod",
+  "install": "bash .cursor/install.sh"
+}
