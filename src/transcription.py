@@ -24,7 +24,7 @@ transcription_engine = config.get(
 
 if transcription_engine == "faster-whisper":
     try:
-        from faster_whisper import WhisperModel
+        from faster_whisper import WhisperModel, BatchedInferencePipeline
     except ImportError:
         logger.error("faster-whisper is not installed.")
         sys.exit(1)
@@ -41,6 +41,10 @@ MIN_DURATION = config.getfloat("clipception", "clip_duration")
 model_size = config.get("clipception.transcription", "model_size")
 device = config.get("clipception.transcription", "device")
 language = config.get("clipception.transcription", "language", fallback="en")
+# Batched inference (faster-whisper 1.1+) transcribes multiple audio chunks per
+# GPU pass, which is significantly faster than sequential decoding.
+batched = config.getboolean("clipception.transcription", "batched", fallback=False)
+batch_size = config.getint("clipception.transcription", "batch_size", fallback=8)
 
 
 def format_time(seconds):
@@ -193,7 +197,12 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
     # Transcribe based on engine type
     if transcription_engine == "faster-whisper":
         # faster-whisper returns segments directly
-        segments, info = model.transcribe(str(audio_path), language=language)
+        if batched:
+            segments, info = model.transcribe(
+                str(audio_path), language=language, batch_size=batch_size
+            )
+        else:
+            segments, info = model.transcribe(str(audio_path), language=language)
         result = {"segments": list(segments)}
     else:
         # Original whisper with FP16 support
@@ -246,6 +255,20 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
     return enhanced_segments
 
 
+def build_faster_whisper_model(device: str):
+    """Create a faster-whisper model, wrapping it in a batched inference
+    pipeline when batching is enabled (faster-whisper 1.1+)."""
+    model = WhisperModel(
+        model_size,
+        device=device,
+        compute_type="float16" if device == "cuda" else "float32",
+    )
+    if batched:
+        logger.info(f"Enabling batched inference pipeline (batch_size={batch_size})")
+        return BatchedInferencePipeline(model=model)
+    return model
+
+
 def process_video(video_path):
     global device
 
@@ -264,11 +287,7 @@ def process_video(video_path):
             f"Loading {transcription_engine} {model_size} model for {device}..."
         )
         if transcription_engine == "faster-whisper":
-            model = WhisperModel(
-                model_size,
-                device=device,
-                compute_type="float16" if device == "cuda" else "float32",
-            )
+            model = build_faster_whisper_model(device)
         else:
             model = whisper.load_model(model_size, device=device)
             # Verify model device
