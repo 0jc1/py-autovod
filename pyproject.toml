@@ -21,6 +21,7 @@ dependencies = [
   "python-dotenv>=1.2.0",
   "soundfile>=0.13.0",
   "pydub>=0.25.0",
+  "audioop-lts ; python_version >= '3.13'",
   "torch",
   "torchaudio",
   "torchvision",
