@@ -14,11 +14,9 @@ import json
 import subprocess
 import time
 import numpy as np
-import soundfile as sf
+from pydub import AudioSegment
 import librosa
 from settings import config
-
-FEATURE_SAMPLE_RATE = 8000
 
 transcription_engine = config.get(
     "clipception.transcription", "engine", fallback="whisper"
@@ -70,42 +68,21 @@ def check_cuda():
     return False
 
 
-def load_wav_samples(audio_path):
-    """Load a WAV as int16 samples so feature scale matches the old pydub path."""
-    samples, sample_rate = sf.read(str(audio_path), dtype="int16", always_2d=False)
-    if samples.ndim > 1:
-        samples = samples[:, 0]
-    return samples, int(sample_rate)
-
-
-def extract_audio_features(samples, sample_rate, start_time, end_time):
+def extract_audio_features(audio_segment, start_time, end_time):
     """Extract audio features for a segment including volume and characteristics"""
-    start_idx = max(0, int(start_time * sample_rate))
-    end_idx = min(len(samples), int(end_time * sample_rate))
-    segment = np.asarray(samples[start_idx:end_idx], dtype=float)
-
+    start_sample = int(start_time * 1000)
+    end_sample = int(end_time * 1000)
     # Downsample to 8000Hz for faster feature extraction
-    feature_sr = sample_rate
-    if len(segment) >= 2 and sample_rate != FEATURE_SAMPLE_RATE:
-        segment = librosa.resample(
-            segment, orig_sr=sample_rate, target_sr=FEATURE_SAMPLE_RATE
-        )
-        feature_sr = FEATURE_SAMPLE_RATE
+    segment = audio_segment[start_sample:end_sample].set_frame_rate(8000)
 
-    if len(segment) == 0:
-        return {
-            "volume": {"level": "quiet", "value": 0.0},
-            "characteristics": {
-                "intensity": "normal",
-                "zero_crossing_rate": 0.0,
-                "spectral_centroid": 0.0,
-            },
-        }
+    samples = np.array(segment.get_array_of_samples())
 
     # Audio analysis
-    rms = librosa.feature.rms(y=segment)[0]
-    zero_crossing_rate = librosa.feature.zero_crossing_rate(segment)[0]
-    spectral_centroid = librosa.feature.spectral_centroid(y=segment, sr=feature_sr)[0]
+    rms = librosa.feature.rms(y=samples.astype(float))[0]
+    zero_crossing_rate = librosa.feature.zero_crossing_rate(samples.astype(float))[0]
+    spectral_centroid = librosa.feature.spectral_centroid(
+        y=samples.astype(float), sr=segment.frame_rate
+    )[0]
 
     avg_volume = float(np.mean(rms))
     avg_zcr = float(np.mean(zero_crossing_rate))
@@ -213,7 +190,7 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
     logger.info("Generating enhanced transcription...")
     enhanced_segments = []
 
-    samples, sample_rate = load_wav_samples(audio_path)
+    audio = AudioSegment.from_wav(str(audio_path))
 
     transcribe_start = time.time()
 
@@ -246,7 +223,7 @@ def transcribe_with_features(model, audio_path, device: str, min_duration=MIN_DU
         end = segment.end if hasattr(segment, "end") else segment["end"]
         text = segment.text if hasattr(segment, "text") else segment["text"]
 
-        audio_features = extract_audio_features(samples, sample_rate, start, end)
+        audio_features = extract_audio_features(audio, start, end)
 
         enhanced_segment = {
             "start": start,
