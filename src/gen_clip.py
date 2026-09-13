@@ -9,7 +9,7 @@ from utils import run_command
 from logger import logger
 
 model_name = config.get(
-    "clipception.llm", "model_name", fallback="deepseek/deepseek-chat"
+    "clipception.llm", "model_name", fallback="deepseek/deepseek-v4-flash-0731"
 )
 temperature = config.getfloat("clipception.llm", "temperature", fallback=0.5)
 max_tokens = config.getint("clipception.llm", "max_tokens", fallback=4000)
@@ -89,7 +89,7 @@ def rank_clips_chunk(clips: list[dict]) -> str:
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a helpful assistant that ranks video clips. Keep explanations brief and focused on virality potential. Follow the format exactly.",
+                        "content": "You are an expert content analyzer that ranks video clips. Keep explanations brief and focused on virality potential. Follow the format exactly.",
                     },
                     {"role": "user", "content": prompt},
                 ],
