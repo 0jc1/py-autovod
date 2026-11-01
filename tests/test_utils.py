@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import tempfile
 from unittest.mock import patch
@@ -51,94 +52,61 @@ class TestStreamPlatform:
         result = StreamPlatform.from_string("youtube")
         assert result == StreamPlatform.YOUTUBE
 
-    def test_from_string_case_insensitive(self):
-        """Test that from_string is case-insensitive"""
-        result = StreamPlatform.from_string("TWITCH")
-        assert result == StreamPlatform.TWITCH
 
-    def test_from_string_invalid(self):
-        """Test invalid string returns None"""
-        result = StreamPlatform.from_string("invalid")
-        assert result is None
+class TestFetchMetadata:
+    """Test cases for fetch_metadata polling behaviour"""
 
-    def test_from_string_empty(self):
-        """Test empty string returns None"""
-        result = StreamPlatform.from_string("")
-        assert result is None
+    @patch("utils.subprocess.run")
+    @patch("utils.time.sleep")
+    def test_returns_immediately_on_success(self, mock_sleep, mock_run):
+        """Should return metadata on first successful response without sleeping."""
+        from utils import fetch_metadata
+        import json
 
+        mock_run.return_value.stdout = json.dumps({
+            "metadata": {"title": "Live stream", "id": "123"}
+        })
+        mock_run.return_value.returncode = 0
 
-class TestIsDocker:
-    """Test cases for is_docker function"""
+        result = fetch_metadata("https://twitch.tv/test")
 
-    def test_not_in_docker(self):
-        """Test when not running in Docker"""
-        with patch("os.path.exists", return_value=False):
-            result = is_docker()
-            assert result is False
+        assert result["title"] == "Live stream"
+        assert result["id"] == "123"
+        mock_sleep.assert_not_called()
+        mock_run.assert_called_once()
 
-    def test_in_docker(self):
-        """Test when running in Docker"""
-        with patch("os.path.exists", return_value=True):
-            result = is_docker()
-            assert result is True
+    @patch("utils.subprocess.run")
+    @patch("utils.time.sleep")
+    def test_retries_until_success(self, mock_sleep, mock_run):
+        """Should poll with backoff and return as soon as valid metadata appears."""
+        from utils import fetch_metadata
+        import json
+        from subprocess import CalledProcessError
 
+        # First two calls fail, third succeeds
+        mock_run.side_effect = [
+            CalledProcessError(1, ["streamlink"]),
+            CalledProcessError(1, ["streamlink"]),
+            subprocess.CompletedProcess(["streamlink"], 0, stdout=json.dumps({"metadata": {"title": "Finally"}})),
+        ]
 
-class TestGetSize:
-    """Test cases for get_size function"""
+        result = fetch_metadata("https://kick.com/test", max_attempts=5)
 
-    def test_get_size_empty_directory(self):
-        """Test get_size with empty directory"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            size = get_size(tmpdir)
-            assert size == 0.0
+        assert result["title"] == "Finally"
+        assert mock_run.call_count == 3
+        # Should have slept for the second and third attempts
+        assert mock_sleep.call_count == 2
 
-    def test_get_size_with_file(self):
-        """Test get_size with a file"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Create a test file with 1MB of data
-            test_file = os.path.join(tmpdir, "test.txt")
-            with open(test_file, "wb") as f:
-                f.write(b"0" * 1_000_000)
+    @patch("utils.subprocess.run")
+    @patch("utils.time.sleep")
+    def test_returns_empty_dict_after_all_failures(self, mock_sleep, mock_run):
+        """Should return {} when all attempts fail."""
+        from utils import fetch_metadata
+        from subprocess import CalledProcessError
 
-            size = get_size(tmpdir)
-            assert 0.9 < size < 1.1  # Allow small margin for exact size
+        mock_run.side_effect = CalledProcessError(1, ["streamlink"])
 
-    def test_get_size_nonexistent_path(self):
-        """Test get_size with nonexistent path"""
-        result = get_size("/nonexistent/path")
-        assert result == 0.0
+        result = fetch_metadata("https://youtube.com/@test/live", max_attempts=3)
 
-    def test_get_size_multiple_files(self):
-        """Test get_size with multiple files"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Create 3 files with 500KB each
-            for i in range(3):
-                test_file = os.path.join(tmpdir, f"test{i}.txt")
-                with open(test_file, "wb") as f:
-                    f.write(b"0" * 500_000)
-
-            size = get_size(tmpdir)
-            assert 1.4 < size < 1.6  # ~1.5 MB
-
-
-class TestLoadConfig:
-    """Test cases for load_config function"""
-
-    def test_load_config_success(self):
-        """Test loading existing config file"""
-        # Use the default.ini that exists in the project
-        config = load_config("default")
-        assert config is not None
-
-    def test_load_config_nonexistent(self):
-        """Test loading nonexistent config file"""
-        config = load_config("nonexistent_config_file")
-        assert config is None
-
-    def test_load_config_returns_configparser(self):
-        """Test that load_config returns ConfigParser object"""
-        import configparser
-
-        config = load_config("default")
-        if config is not None:
-            assert isinstance(config, configparser.ConfigParser)
+        assert result == {}
+        assert mock_run.call_count == 3

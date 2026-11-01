@@ -85,23 +85,47 @@ def get_size(path: str) -> float:
     return bytes_total / 1_000_000  # Convert to MB
 
 
-def fetch_metadata(streamer_url: str) -> dict:
-    try:
-        # TODO: fix this code smell
-        time.sleep(22)
-        result = subprocess.run(
-            ["streamlink", "--json", streamer_url],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return json.loads(result.stdout)["metadata"]
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Streamlink error: {e}")
-        return None
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON decode error: {e}")
-        return None
+def fetch_metadata(streamer_url: str, max_attempts: int = 5) -> dict:
+    """Fetch stream metadata with exponential backoff polling.
+
+    Replaces the previous fixed 22-second sleep. Polls streamlink --json
+    up to max_attempts times with backoff (2s, 4s, 8s, ...). Returns as soon
+    as parseable metadata containing a non-empty title or id is available.
+    Returns empty dict on total failure so callers can fall back to
+    timestamp-based filenames.
+    """
+    backoffs = [2 ** i for i in range(1, max_attempts + 1)]  # 2, 4, 8, 16, 32
+    last_error = None
+
+    for attempt, delay in enumerate(backoffs, start=1):
+        if attempt > 1:
+            time.sleep(delay)
+
+        try:
+            result = subprocess.run(
+                ["streamlink", "--json", streamer_url],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            data = json.loads(result.stdout)
+            metadata = data.get("metadata") or {}
+            if metadata.get("title") or metadata.get("id"):
+                return metadata
+            # Metadata present but incomplete; keep polling
+            logger.debug(f"Incomplete metadata on attempt {attempt}, retrying")
+        except subprocess.CalledProcessError as e:
+            last_error = e
+            logger.debug(f"Streamlink error on attempt {attempt}: {e}")
+        except json.JSONDecodeError as e:
+            last_error = e
+            logger.debug(f"JSON decode error on attempt {attempt}: {e}")
+
+    if last_error:
+        logger.error(f"Failed to fetch metadata after {max_attempts} attempts: {last_error}")
+    else:
+        logger.error(f"No usable metadata after {max_attempts} attempts")
+    return {}
 
 
 def get_version_from_toml() -> str:
@@ -126,7 +150,7 @@ def get_version_from_toml() -> str:
         return data.get("project", {}).get("version", "0.0.0")
     except Exception:
         logger.exception(f"Error getting version from {path}")
-    return "0.0.0"
+        return "0.0.0"
 
 
 def load_config(config_name: str) -> configparser.ConfigParser | None:
