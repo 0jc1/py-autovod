@@ -1,37 +1,33 @@
-# This is a temporary file right now it will not work for this project
+FROM python:3.11-slim-bookworm
 
-# Build from python slim image
-FROM python:3.13-slim
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TZ=America/New_York \
+    DISPLAY=:99
 
-# Set ENV variables
-ENV TZ=America/New_York
-ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
 
-# Default display to :99
-ENV DISPLAY=:99
-
-# Install other dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    dos2unix \
-    python3-pip \ 
+    ca-certificates \
+    ffmpeg \
     git \
+    libgomp1 \
+    libsndfile1 \
     tzdata \
     xvfb \
-    ffmpeg \
-    streamlink \
-&& rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
-COPY ./requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt 
+# Use CPU-only PyTorch packages to avoid installing CUDA dependencies.
+RUN python -m pip install --no-cache-dir \
+    torch torchaudio torchvision \
+    --index-url https://download.pytorch.org/whl/cpu
 
-# CD into app
-WORKDIR /app
 COPY . .
 
-# Make the entrypoint executable
-RUN dos2unix entrypoint.sh && \
-    chmod +x entrypoint.sh
+# Install the project using pyproject.toml.
+RUN python -m pip install --no-cache-dir -e . streamlink
 
-# Set the entrypoint to our entrypoint.sh
+# Handle Windows line endings.
+RUN sed -i 's/\r$//' /app/entrypoint.sh \
+    && chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]

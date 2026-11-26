@@ -1,9 +1,13 @@
 services:
   app:
     build: .
+    image: py-autovod:local
     container_name: py-autovod
+    init: true
     volumes:
-      - .:/app
+      - ./config.ini:/app/config.ini:ro
+      - ./default.ini:/app/default.ini:ro
+      - ./recordings:/app/recordings
     restart: unless-stopped
     env_file:
       - .env
