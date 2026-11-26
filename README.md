@@ -27,7 +27,6 @@ Use [autovod.ai](https://autovod.ai) for a free web version.
    ```bash
    python -m venv env
    . env/bin/activate
-   pip install -r requirements.txt
    ```
 3. Install from source using pip.
    ```bash
@@ -50,6 +49,56 @@ Use [autovod.ai](https://autovod.ai) for a free web version.
    ```bash
    autovod
    ```
+
+## Docker setup (CPU)
+
+Install Docker with Docker Compose, then copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Configure the streamers in `config.ini`. For CPU transcription, use these
+settings under `[clipception.transcription]`:
+
+```ini
+device = cpu
+batched = false
+```
+
+Set `OPEN_ROUTER_KEY` in `.env` to use AI clipping. Without a key,
+AI clipping is disabled; stream monitoring can still run.
+
+Build and start the application:
+
+```bash
+docker compose up --build
+```
+
+Successful startup includes a `Started monitoring ...` log message.
+Press Ctrl+C to stop.
+
+Compose mounts `config.ini` and `default.ini` as read-only files.
+Recordings are saved in the host's `recordings/` directory.
+
+For a custom streamer configuration, add a mount under `volumes`:
+
+```yaml
+- ./streamername.ini:/app/streamername.ini:ro
+```
+
+The image uses CPU-only PyTorch. GPU transcription requires a separate
+CUDA-enabled setup.
+
+The Docker build excludes Git history, virtual environments, recordings,
+media files, logs, and `.env`.
+
 
 ## Uploading
 

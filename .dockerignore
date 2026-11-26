@@ -1,0 +1,14 @@
+.git/
+.venv/
+venv/
+env/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.ruff_cache/
+recordings/
+*.ts
+*.mp4
+*.wav
+*.log
+.env
